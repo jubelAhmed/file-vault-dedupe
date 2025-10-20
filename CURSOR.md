@@ -400,7 +400,6 @@ files/
 
 # File Upload Settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 
 # Storage Settings
 MEDIA_ROOT = BASE_DIR / 'media'

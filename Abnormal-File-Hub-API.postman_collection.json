@@ -1,0 +1,639 @@
+{
+	"info": {
+		"_postman_id": "abnormal-file-hub-api",
+		"name": "Abnormal File Hub API",
+		"description": "Complete API collection for testing the Abnormal File Hub with deduplication features",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "abnormal-file-hub"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health",
+								""
+							]
+						},
+						"description": "Simple health check endpoint that doesn't require UserId header"
+					},
+					"response": []
+				}
+			],
+			"description": "Health check endpoints"
+		},
+		{
+			"name": "File Management",
+			"item": [
+				{
+					"name": "List Files",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "UserId",
+								"value": "{{user_id}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/files/?search={{search}}&file_type={{file_type}}&min_size={{min_size}}&max_size={{max_size}}&is_duplicate={{is_duplicate}}&ordering={{ordering}}&page={{page}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								""
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "{{search}}",
+									"description": "Search in filename (case-insensitive)"
+								},
+								{
+									"key": "file_type",
+									"value": "{{file_type}}",
+									"description": "Filter by file type (MIME type)"
+								},
+								{
+									"key": "min_size",
+									"value": "{{min_size}}",
+									"description": "Minimum file size in bytes"
+								},
+								{
+									"key": "max_size",
+									"value": "{{max_size}}",
+									"description": "Maximum file size in bytes"
+								},
+								{
+									"key": "is_duplicate",
+									"value": "{{is_duplicate}}",
+									"description": "Filter by duplicate status (true/false)"
+								},
+								{
+									"key": "ordering",
+									"value": "{{ordering}}",
+									"description": "Sort by field (uploaded_at, size, original_filename)"
+								},
+								{
+									"key": "page",
+									"value": "{{page}}",
+									"description": "Page number for pagination"
+								}
+							]
+						},
+						"description": "List all files for the current user with optional filtering and pagination"
+					},
+					"response": []
+				},
+				{
+					"name": "Upload File",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "UserId",
+								"value": "{{user_id}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "File to upload (max 10MB)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/files/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								""
+							]
+						},
+						"description": "Upload a new file with automatic deduplication support"
+					},
+					"response": []
+				},
+				{
+					"name": "Get File Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "UserId",
+								"value": "{{user_id}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/files/{{file_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"{{file_id}}",
+								""
+							]
+						},
+						"description": "Get detailed information about a specific file"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete File",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "UserId",
+								"value": "{{user_id}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/files/{{file_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"{{file_id}}",
+								""
+							]
+						},
+						"description": "Delete a file with proper reference counting"
+					},
+					"response": []
+				}
+			],
+			"description": "Core file management operations"
+		},
+		{
+			"name": "Statistics",
+			"item": [
+				{
+					"name": "Storage Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "UserId",
+								"value": "{{user_id}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/files/storage_stats/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"storage_stats",
+								""
+							]
+						},
+						"description": "Get storage statistics for the current user including quota usage and savings"
+					},
+					"response": []
+				},
+				{
+					"name": "Deduplication Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "UserId",
+								"value": "{{user_id}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/files/deduplication_stats/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"deduplication_stats",
+								""
+							]
+						},
+						"description": "Get system-wide deduplication statistics"
+					},
+					"response": []
+				},
+				{
+					"name": "File Types",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "UserId",
+								"value": "{{user_id}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/files/file_types/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"file_types",
+								""
+							]
+						},
+						"description": "Get list of unique file types for the current user"
+					},
+					"response": []
+				}
+			],
+			"description": "Statistics and analytics endpoints"
+		},
+		{
+			"name": "Testing Scenarios",
+			"item": [
+				{
+					"name": "Test Rate Limiting",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "UserId",
+								"value": "{{user_id}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/files/storage_stats/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"storage_stats",
+								""
+							]
+						},
+						"description": "Test rate limiting by making multiple rapid requests (limit: 10 requests/second)"
+					},
+					"response": []
+				},
+				{
+					"name": "Test Invalid UserId",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "UserId",
+								"value": "invalid@user#id",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/files/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								""
+							]
+						},
+						"description": "Test UserId validation with invalid characters"
+					},
+					"response": []
+				},
+				{
+					"name": "Test Missing UserId",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/files/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								""
+							]
+						},
+						"description": "Test API without UserId header (should return 401)"
+					},
+					"response": []
+				},
+				{
+					"name": "Test File Upload - Small File",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "UserId",
+								"value": "{{user_id}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "Upload a small text file (e.g., test.txt with 'Hello World')"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/files/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								""
+							]
+						},
+						"description": "Test uploading a small file to verify basic functionality"
+					},
+					"response": []
+				},
+				{
+					"name": "Test File Upload - Duplicate File",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "UserId",
+								"value": "{{user_id}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "Upload the same file again to test deduplication"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/files/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								""
+							]
+						},
+						"description": "Test deduplication by uploading the same file twice"
+					},
+					"response": []
+				},
+				{
+					"name": "Test File Upload - Large File",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "UserId",
+								"value": "{{user_id}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "Upload a file larger than 10MB to test quota limits"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/files/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								""
+							]
+						},
+						"description": "Test storage quota by uploading a large file"
+					},
+					"response": []
+				},
+				{
+					"name": "Test File Upload - Invalid File Type",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "UserId",
+								"value": "{{user_id}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "Upload an .exe file to test file type validation"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/files/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"files",
+								""
+							]
+						},
+						"description": "Test file type validation with blocked file types"
+					},
+					"response": []
+				}
+			],
+			"description": "Various testing scenarios to validate API functionality"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-generate test file if needed",
+					"if (pm.request.body && pm.request.body.mode === 'formdata') {",
+					"    const fileField = pm.request.body.formdata.find(field => field.key === 'file');",
+					"    if (fileField && !fileField.src) {",
+					"        // Create a simple test file content",
+					"        const testContent = 'This is a test file for Abnormal File Hub API testing.\\nTimestamp: ' + new Date().toISOString();",
+					"        const blob = new Blob([testContent], { type: 'text/plain' });",
+					"        fileField.src = blob;",
+					"    }",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Common test scripts",
+					"pm.test('Response time is less than 5000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});",
+					"",
+					"pm.test('Response has valid JSON', function () {",
+					"    if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+					"        pm.response.to.have.jsonBody();",
+					"    }",
+					"});",
+					"",
+					"// Test for UserId validation errors",
+					"if (pm.response.code === 401) {",
+					"    pm.test('UserId validation error', function () {",
+					"        const jsonData = pm.response.json();",
+					"        pm.expect(jsonData).to.have.property('error');",
+					"        pm.expect(jsonData.error).to.include('UserId');",
+					"    });",
+					"}",
+					"",
+					"// Test for rate limiting",
+					"if (pm.response.code === 429) {",
+					"    pm.test('Rate limit exceeded', function () {",
+					"        const jsonData = pm.response.json();",
+					"        pm.expect(jsonData).to.have.property('error');",
+					"        pm.expect(jsonData.error).to.include('Rate limit');",
+					"    });",
+					"}",
+					"",
+					"// Test for successful file operations",
+					"if (pm.response.code === 201 && pm.request.url.path.includes('files')) {",
+					"    pm.test('File upload successful', function () {",
+					"        const jsonData = pm.response.json();",
+					"        pm.expect(jsonData).to.have.property('message');",
+					"        pm.expect(jsonData).to.have.property('data');",
+					"        pm.expect(jsonData.data).to.have.property('id');",
+					"        pm.expect(jsonData.data).to.have.property('file_hash');",
+					"    });",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string",
+			"description": "Base URL for the API server"
+		},
+		{
+			"key": "user_id",
+			"value": "testuser123",
+			"type": "string",
+			"description": "Default UserId for testing"
+		},
+		{
+			"key": "file_id",
+			"value": "",
+			"type": "string",
+			"description": "File ID for testing specific file operations"
+		},
+		{
+			"key": "search",
+			"value": "",
+			"type": "string",
+			"description": "Search term for filtering files"
+		},
+		{
+			"key": "file_type",
+			"value": "",
+			"type": "string",
+			"description": "File type filter (MIME type)"
+		},
+		{
+			"key": "min_size",
+			"value": "",
+			"type": "string",
+			"description": "Minimum file size in bytes"
+		},
+		{
+			"key": "max_size",
+			"value": "",
+			"type": "string",
+			"description": "Maximum file size in bytes"
+		},
+		{
+			"key": "is_duplicate",
+			"value": "",
+			"type": "string",
+			"description": "Filter by duplicate status (true/false)"
+		},
+		{
+			"key": "ordering",
+			"value": "-uploaded_at",
+			"type": "string",
+			"description": "Sort order for file listing"
+		},
+		{
+			"key": "page",
+			"value": "1",
+			"type": "string",
+			"description": "Page number for pagination"
+		}
+	]
+}

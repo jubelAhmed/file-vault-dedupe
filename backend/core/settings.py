@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,6 +32,9 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*']  # Configure appropriately in production
 
+CSRF_TRUSTED_ORIGINS = [
+  "http://localhost:3000",
+]
 
 # Application definition
 
@@ -40,6 +47,7 @@ INSTALLED_APPS = [
   "django.contrib.staticfiles",
   "rest_framework",
   "corsheaders",
+  "django_filters",
   "files",
 ]
 
@@ -48,6 +56,8 @@ MIDDLEWARE = [
   "whitenoise.middleware.WhiteNoiseMiddleware",
   "django.contrib.sessions.middleware.SessionMiddleware",
   "corsheaders.middleware.CorsMiddleware",
+  "core.middleware.user_id.UserIdMiddleware",
+  "core.middleware.rate_limit.RateLimitMiddleware",
   "django.middleware.common.CommonMiddleware",
   "django.middleware.csrf.CsrfViewMiddleware",
   "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -134,7 +144,51 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# REST Framework settings
+# REST Framework settings (moved to bottom for better organization)
+
+# CORS settings
+CORS_ALLOW_ALL_ORIGINS = True  # Configure appropriately in production
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'userid',  # Custom header for our API
+    'UserId',  # Custom header for our API
+]
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+CORS_EXPOSE_HEADERS = [
+    'x-user-id',  # Expose UserId in response headers
+]
+CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours
+CORS_ALLOW_PRIVATE_NETWORK = True
+
+
+# Storage Settings
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
+
+# Rate Limiting - configurable via environment variables
+RATE_LIMIT_CALLS = int(os.getenv('MAX_CALLS', '2'))
+RATE_LIMIT_WINDOW = int(os.getenv('TIME_WINDOW', '1'))  # seconds
+
+# Storage Quota - configurable via environment variables
+STORAGE_QUOTA_PER_USER = int(os.getenv('STORAGE_QUOTA_PER_USER', '10485760'))  # 10MB default
+
+# Pagination
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny'
@@ -144,8 +198,9 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.MultiPartParser',
         'rest_framework.parsers.FormParser',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 50,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ]
 }
-
-# CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # Configure appropriately in production
-CORS_ALLOW_CREDENTIALS = True

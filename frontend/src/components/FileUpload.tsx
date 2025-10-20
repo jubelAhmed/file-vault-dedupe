@@ -2,23 +2,20 @@ import React, { useState } from 'react';
 import { fileService } from '../services/fileService';
 import { CloudArrowUpIcon } from '@heroicons/react/24/outline';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useUserId } from '../contexts/UserIdContext';
 
-interface FileUploadProps {
-  onUploadSuccess: () => void;
-}
-
-export const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
+export const FileUpload: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { userId } = useUserId();
 
   const uploadMutation = useMutation({
     mutationFn: fileService.uploadFile,
     onSuccess: () => {
       // Invalidate and refetch files query
-      queryClient.invalidateQueries({ queryKey: ['files'] });
+      queryClient.invalidateQueries({ queryKey: ['files', userId] });
       setSelectedFile(null);
-      onUploadSuccess();
     },
     onError: (error) => {
       setError('Failed to upload file. Please try again.');
