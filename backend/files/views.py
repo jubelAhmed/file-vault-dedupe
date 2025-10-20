@@ -90,6 +90,9 @@ class FileViewSet(viewsets.ModelViewSet):
             )
         
         # Handle file upload with deduplication
+        # TODO: Future enhancement - Move to background job processing (Celery/Django Background Tasks)
+        # This will improve performance for large files and provide better user experience
+        # with async processing and status tracking
         try:
             file_instance = DeduplicationService.handle_file_upload(
                 request.user_id, file_obj
