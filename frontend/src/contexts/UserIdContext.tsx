@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { setUserId, getUserId, clearUserId } from '../services/fileService';
+import { setUserId, clearUserId } from '../services/fileService';
 import { API_CONFIG } from '../config/api';
 
 interface UserIdContextType {

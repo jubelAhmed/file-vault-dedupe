@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
 import { fileService } from '../services/fileService';
-import { File as FileType } from '../types/file';
 import { DocumentIcon, TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUserId } from '../contexts/UserIdContext';
@@ -17,7 +16,7 @@ export const FileList: React.FC = () => {
   }, [userId]);
 
   // Query for fetching files (without search filters initially)
-  const { data: files, isLoading, error, refetch } = useQuery({
+  const { data: files, isLoading, error } = useQuery({
     queryKey: ['files', userId],
     queryFn: async () => {
       console.log('FileList: Fetching files for userId:', userId);

@@ -30,11 +30,42 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-default-key-fo
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*']  # Configure appropriately in production
+# Configure for both local and production
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
-CSRF_TRUSTED_ORIGINS = [
-  "http://localhost:3000",
-]
+# CSRF trusted origins - Dynamic configuration
+def get_csrf_trusted_origins():
+    """Generate CSRF trusted origins dynamically."""
+    origins = []
+    
+    # Generate port ranges dynamically
+    def get_ports():
+        ports = []
+        # Common development port ranges
+        ports.extend(range(3000, 3009))  # 3000-3008 (React dev servers)
+        ports.extend([8080, 4200, 5173])  
+        return ports
+    
+    hosts = ['localhost', '127.0.0.1']
+    protocols = ['http', 'https']
+    
+    # Generate combinations
+    for host in hosts:
+        for port in get_ports():
+            for protocol in protocols:
+                origins.append(f"{protocol}://{host}:{port}")
+    
+    # Add custom local origins from environment
+    custom_origins = os.environ.get('CSRF_LOCAL_ORIGINS', '').split(',')
+    origins.extend([origin.strip() for origin in custom_origins if origin.strip()])
+    
+    # Add production origins from environment
+    prod_origins = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+    origins.extend([origin.strip() for origin in prod_origins if origin.strip()])
+    
+    return origins
+
+CSRF_TRUSTED_ORIGINS = get_csrf_trusted_origins()
 
 # Application definition
 
@@ -146,9 +177,15 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # REST Framework settings (moved to bottom for better organization)
 
-# CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # Configure appropriately in production
+# CORS settings - Environment-aware configuration
+CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True') == 'True'  # False in production
 CORS_ALLOW_CREDENTIALS = True
+
+# Production CORS origins (when CORS_ALLOW_ALL_ORIGINS is False)
+CORS_ALLOWED_ORIGINS = []
+PRODUCTION_CORS_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
+if PRODUCTION_CORS_ORIGINS and PRODUCTION_CORS_ORIGINS != ['']:
+    CORS_ALLOWED_ORIGINS.extend([origin.strip() for origin in PRODUCTION_CORS_ORIGINS if origin.strip()])
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',

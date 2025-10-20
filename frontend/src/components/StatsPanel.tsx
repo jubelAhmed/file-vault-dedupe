@@ -3,26 +3,6 @@ import { fileService } from '../services/fileService';
 import { useUserId } from '../contexts/UserIdContext';
 import { useQuery } from '@tanstack/react-query';
 
-interface StorageStats {
-  user_id: string;
-  total_storage_used: number;
-  original_storage_used: number;
-  quota_limit: number;
-  quota_remaining: number;
-  quota_usage_percentage: number;
-}
-
-interface DeduplicationStats {
-  total_files: number;
-  original_files: number;
-  reference_files: number;
-  deduplication_ratio: number;
-  total_original_storage: number;
-  total_actual_storage: number;
-  storage_savings: number;
-  savings_percentage: number;
-}
-
 const StatsPanel: React.FC = () => {
   const { userId, isAuthenticated } = useUserId();
 
