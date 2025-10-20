@@ -15,6 +15,9 @@ export const FileUpload: React.FC = () => {
     onSuccess: () => {
       // Invalidate and refetch files query
       queryClient.invalidateQueries({ queryKey: ['files', userId] });
+      // Invalidate and refetch stats queries to update the StatsPanel
+      queryClient.invalidateQueries({ queryKey: ['storageStats', userId] });
+      queryClient.invalidateQueries({ queryKey: ['deduplicationStats', userId] });
       setSelectedFile(null);
     },
     onError: (error) => {

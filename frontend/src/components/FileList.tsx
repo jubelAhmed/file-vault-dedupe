@@ -39,6 +39,9 @@ export const FileList: React.FC = () => {
     mutationFn: fileService.deleteFile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files', userId] });
+      // Invalidate and refetch stats queries to update the StatsPanel
+      queryClient.invalidateQueries({ queryKey: ['storageStats', userId] });
+      queryClient.invalidateQueries({ queryKey: ['deduplicationStats', userId] });
     },
   });
 

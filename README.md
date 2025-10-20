@@ -59,10 +59,15 @@ docker-compose up --build
 4. **Create Environment File**
     Create `.env`:
    ```
+   # Rate Limiting Configuration
    MAX_CALLS=10         # Maximum calls per time window
-   TIME_WINDOW=1 # Second
-   STORAGE_QUOTA_PER_USER=10485760 #10mb
+   TIME_WINDOW=1        # Time window in seconds
+   
+   # Storage Configuration
+   STORAGE_QUOTA_PER_USER=10485760  # 10MB per user
    ```
+   
+   **Note**: Rate limiting uses Django's cache framework. For development, it uses `LocMemCache` (in-memory). For production, configure Redis or Memcached in `settings.py` for multi-container deployments.
 
 4. **Run migrations**
    ```bash

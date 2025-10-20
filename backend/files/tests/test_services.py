@@ -101,20 +101,40 @@ class ServiceTestCase(TestCase):
         with self.assertRaises(Exception):
             FileValidator.validate_filename("../../../etc/passwd")
     
-    def test_middleware_rate_limit_cleanup(self):
-        """Test rate limit middleware cleanup edge case."""
+    def test_middleware_rate_limit_cache_cleanup(self):
+        """Test rate limit middleware cache cleanup with old timestamps."""
         from core.middleware.rate_limit import RateLimitMiddleware
-        from django.test import RequestFactory
+        from django.test import RequestFactory, override_settings
+        from django.core.cache import cache
+        import time
+        
+        # Clear cache first
+        cache.clear()
         
         factory = RequestFactory()
         request = factory.get('/api/files/')
         request.user_id = self.user_id
         
-        middleware = RateLimitMiddleware(lambda x: None)
+        with override_settings(RATE_LIMIT_CALLS=2, RATE_LIMIT_WINDOW=1):
+            middleware = RateLimitMiddleware(lambda x: None)
+            
+            # Manually add an old timestamp to cache
+            cache_key = f"rate-limit:{self.user_id}"
+            old_time = time.time() - 10  # 10 seconds ago
+            cache.set(cache_key, [old_time], timeout=1)
+            
+            # Process request - should clean up old timestamp
+            result = middleware.process_request(request)
+            
+            # Should not be rate limited (old timestamp cleaned up)
+            self.assertIsNone(result)
+            
+            # Cache should have only the new timestamp
+            timestamps = cache.get(cache_key, [])
+            self.assertEqual(len(timestamps), 1)
+            
+            # The timestamp should be recent (not the old one)
+            self.assertGreater(timestamps[0], old_time)
         
-        # Test cleanup with old timestamps
-        middleware.calls[self.user_id] = [0]  # Very old timestamp
-        middleware.process_request(request)
-        
-        # Should clean up old timestamps
-        self.assertEqual(len(middleware.calls[self.user_id]), 1)  # Only current call
+        # Clean up
+        cache.clear()
