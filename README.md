@@ -56,6 +56,13 @@ docker-compose up --build
    ```bash
    mkdir -p media staticfiles data
    ```
+4. **Create Environment File**
+    Create `.env`:
+   ```
+   MAX_CALLS=10         # Maximum calls per time window
+   TIME_WINDOW=1 # Second
+   STORAGE_QUOTA_PER_USER=10485760 #10mb
+   ```
 
 4. **Run migrations**
    ```bash
@@ -66,6 +73,61 @@ docker-compose up --build
    ```bash
    python manage.py runserver
    ```
+
+#### Testing and Coverage
+
+1. **Run all tests**
+   ```bash
+   cd backend
+   source venv/bin/activate
+   python manage.py test files.tests
+   ```
+
+2. **Run specific test files**
+   ```bash
+   # Test models and serializers
+   python manage.py test files.tests.test_models
+   
+   # Test API endpoints
+   python manage.py test files.tests.test_api
+   
+   # Test filtering functionality
+   python manage.py test files.tests.test_filters
+   
+   # Test rate limiting
+   python manage.py test files.tests.test_rate_limiting
+   
+   # Test services and utilities
+   python manage.py test files.tests.test_services
+   ```
+
+3. **Run tests with coverage**
+   ```bash
+   # Install coverage if not already installed
+   pip install coverage
+   
+   # Run tests with coverage
+   coverage run --source='.' manage.py test files.tests
+   
+   # Generate coverage report
+   coverage report
+   
+   # Generate HTML coverage report
+   coverage html
+   ```
+
+4. **View coverage report**
+   ```bash
+   # Open HTML report in browser
+   open htmlcov/index.html
+   ```
+
+5. **Test categories**
+   - **Models**: File and UserStorage model functionality
+   - **API**: CRUD operations, user isolation, stats endpoints
+   - **Filters**: Search, file type, size, and date filtering
+   - **Rate Limiting**: Per-user rate limiting enforcement
+   - **Services**: Hash, storage, and deduplication services
 
 #### Frontend Setup
 1. **Install dependencies**
