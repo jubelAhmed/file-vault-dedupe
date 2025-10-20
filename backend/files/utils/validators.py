@@ -34,7 +34,7 @@ class FileValidator:
     
     # Allowed file types (can be expanded)
     ALLOWED_EXTENSIONS = {
-        'image': ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'],
+        'image': ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.ico'],
         'document': ['.pdf', '.doc', '.docx', '.txt', '.rtf'],
         'spreadsheet': ['.xls', '.xlsx', '.csv'],
         'presentation': ['.ppt', '.pptx'],
