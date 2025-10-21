@@ -10,3 +10,4 @@ asgiref>=3.10.0
 coverage>=7.11.0
 packaging>=25.0
 sqlparse>=0.5.3
+python-magic>=0.4.27

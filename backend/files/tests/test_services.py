@@ -85,13 +85,16 @@ class ServiceTestCase(TestCase):
         except Exception:
             self.fail("Getting deduplication stats should not raise an exception")
     
-    def test_file_validator_blocked_extension(self):
-        """Test file validator with blocked file extension."""
+    def test_file_validator_disallowed_extension(self):
+        """Test file validator with disallowed file extension (not in allow-list)."""
         from ..utils.validators import FileValidator
         
-        # Test with a blocked extension
-        with self.assertRaises(Exception):
-            FileValidator.validate_file_extension("test.exe")
+        # Test with extensions not in the allow-list
+        disallowed_extensions = ['test.exe', 'malware.bat', 'script.js', 'app.dmg', 'file.unknown']
+        
+        for filename in disallowed_extensions:
+            with self.assertRaises(Exception):
+                FileValidator.validate_file_extension(filename)
     
     def test_file_validator_path_traversal(self):
         """Test file validator with path traversal filename."""

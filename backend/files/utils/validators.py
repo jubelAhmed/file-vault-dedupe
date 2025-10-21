@@ -2,7 +2,15 @@
 Validators for file uploads and user input.
 """
 import os
+import mimetypes
 from django.core.exceptions import ValidationError
+
+# Try to import python-magic for content-based validation
+try:
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError:
+    MAGIC_AVAILABLE = False
 
 
 class FileValidator:
@@ -32,21 +40,86 @@ class FileValidator:
         s = round(size_bytes / p, 2)
         return f"{s} {size_names[i]}"
     
-    # Allowed file types (can be expanded)
+    # Allowed file types (allow-list approach for security)
+    # Only these extensions are permitted - everything else is rejected by default
     ALLOWED_EXTENSIONS = {
-        'image': ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.ico'],
-        'document': ['.pdf', '.doc', '.docx', '.txt', '.rtf'],
-        'spreadsheet': ['.xls', '.xlsx', '.csv'],
-        'presentation': ['.ppt', '.pptx'],
-        'archive': ['.zip', '.rar', '.7z', '.tar', '.gz'],
-        'video': ['.mp4', '.avi', '.mov', '.wmv', '.flv'],
-        'audio': ['.mp3', '.wav', '.flac', '.aac', '.ogg'],
+        'image': ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.ico', '.svg'],
+        'document': ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt'],
+        'spreadsheet': ['.xls', '.xlsx', '.csv', '.ods'],
+        'presentation': ['.ppt', '.pptx', '.odp'],
+        'archive': ['.zip', '.rar', '.7z', '.tar', '.gz', '.bz2'],
+        'video': ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.webm'],
+        'audio': ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a'],
+        'data': ['.json', '.xml', '.yaml', '.yml'],
+        'code': ['.md', '.log'],
     }
     
-    # Dangerous file types to block
-    BLOCKED_EXTENSIONS = {
-        '.exe', '.bat', '.cmd', '.com', '.pif', '.scr', '.vbs', '.js',
-        '.jar', '.app', '.deb', '.rpm', '.msi', '.dmg'
+    # MIME type mappings for content validation
+    # Maps file extensions to their expected MIME types
+    EXPECTED_MIME_TYPES = {
+        # Images
+        '.jpg': ['image/jpeg'],
+        '.jpeg': ['image/jpeg'],
+        '.png': ['image/png'],
+        '.gif': ['image/gif'],
+        '.bmp': ['image/bmp', 'image/x-ms-bmp'],
+        '.webp': ['image/webp'],
+        '.ico': ['image/x-icon', 'image/vnd.microsoft.icon'],
+        '.svg': ['image/svg+xml'],
+        
+        # Documents
+        '.pdf': ['application/pdf'],
+        '.doc': ['application/msword'],
+        '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        '.txt': ['text/plain'],
+        '.rtf': ['application/rtf', 'text/rtf'],
+        '.odt': ['application/vnd.oasis.opendocument.text'],
+        
+        # Spreadsheets
+        '.xls': ['application/vnd.ms-excel'],
+        '.xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        '.csv': ['text/csv', 'text/plain', 'application/csv'],
+        '.ods': ['application/vnd.oasis.opendocument.spreadsheet'],
+        
+        # Presentations
+        '.ppt': ['application/vnd.ms-powerpoint'],
+        '.pptx': ['application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+        '.odp': ['application/vnd.oasis.opendocument.presentation'],
+        
+        # Archives
+        '.zip': ['application/zip', 'application/x-zip-compressed'],
+        '.rar': ['application/x-rar-compressed', 'application/vnd.rar'],
+        '.7z': ['application/x-7z-compressed'],
+        '.tar': ['application/x-tar'],
+        '.gz': ['application/gzip', 'application/x-gzip'],
+        '.bz2': ['application/x-bzip2'],
+        
+        # Video
+        '.mp4': ['video/mp4'],
+        '.avi': ['video/x-msvideo'],
+        '.mov': ['video/quicktime'],
+        '.wmv': ['video/x-ms-wmv'],
+        '.flv': ['video/x-flv'],
+        '.mkv': ['video/x-matroska'],
+        '.webm': ['video/webm'],
+        
+        # Audio
+        '.mp3': ['audio/mpeg'],
+        '.wav': ['audio/wav', 'audio/x-wav'],
+        '.flac': ['audio/flac'],
+        '.aac': ['audio/aac'],
+        '.ogg': ['audio/ogg'],
+        '.m4a': ['audio/mp4', 'audio/x-m4a'],
+        
+        # Data
+        '.json': ['application/json', 'text/plain'],
+        '.xml': ['application/xml', 'text/xml'],
+        '.yaml': ['text/yaml', 'text/x-yaml', 'application/x-yaml', 'text/plain'],
+        '.yml': ['text/yaml', 'text/x-yaml', 'application/x-yaml', 'text/plain'],
+        
+        # Code
+        '.md': ['text/markdown', 'text/plain'],
+        '.log': ['text/plain'],
     }
     
     @classmethod
@@ -71,31 +144,97 @@ class FileValidator:
     @classmethod
     def validate_file_extension(cls, filename):
         """
-        Validate file extension against allowed and blocked lists.
+        Validate file extension against allowed list (allow-list approach).
+        
+        Uses an allow-list security model: only explicitly allowed extensions
+        are permitted. Everything else is rejected by default.
         
         Args:
             filename (str): Name of the file
             
         Raises:
-            ValidationError: If file extension is not allowed or is blocked
+            ValidationError: If file extension is not in the allowed list
         """
         _, ext = os.path.splitext(filename.lower())
         
-        if ext in cls.BLOCKED_EXTENSIONS:
-            raise ValidationError(
-                f"File extension '{ext}' is not allowed for security reasons"
-            )
-        
-        # Check if extension is in any allowed category
+        # Build set of all allowed extensions
         allowed_extensions = set()
         for category_extensions in cls.ALLOWED_EXTENSIONS.values():
             allowed_extensions.update(category_extensions)
         
+        # Reject if not in allow-list
         if ext not in allowed_extensions:
             raise ValidationError(
                 f"File extension '{ext}' is not supported. "
                 f"Allowed extensions: {', '.join(sorted(allowed_extensions))}"
             )
+    
+    @classmethod
+    def validate_file_content(cls, file_obj):
+        """
+        Validate file content matches its extension (detect file type spoofing).
+        
+        This prevents attacks where malicious files are renamed with safe extensions
+        (e.g., malware.exe renamed to malware.png).
+        
+        Uses multiple detection methods:
+        1. python-magic (libmagic) - reads file signature/magic numbers
+        2. Django's content_type from upload
+        3. Fallback to extension-based validation
+        
+        Args:
+            file_obj: Django UploadedFile object
+            
+        Raises:
+            ValidationError: If file content doesn't match its extension
+        """
+        _, ext = os.path.splitext(file_obj.name.lower())
+        
+        # Get expected MIME types for this extension
+        expected_mimes = cls.EXPECTED_MIME_TYPES.get(ext, [])
+        
+        if not expected_mimes:
+            # No MIME validation defined for this extension, skip content check
+            return
+        
+        detected_mime = None
+        
+        # Method 1: Use python-magic if available (most reliable)
+        if MAGIC_AVAILABLE:
+            try:
+                # Read first 2048 bytes for magic number detection
+                file_obj.seek(0)
+                file_start = file_obj.read(2048)
+                file_obj.seek(0)  # Reset to start
+                
+                # Detect MIME type from content
+                detected_mime = magic.from_buffer(file_start, mime=True)
+                
+            except Exception:
+                # If magic fails, fall through to other methods
+                pass
+        
+        # Method 2: Use Django's content_type from upload (less reliable)
+        if not detected_mime and hasattr(file_obj, 'content_type'):
+            detected_mime = file_obj.content_type
+        
+        # Method 3: Fallback to mimetypes library (least reliable)
+        if not detected_mime:
+            detected_mime, _ = mimetypes.guess_type(file_obj.name)
+        
+        # Validate detected MIME type
+        if detected_mime:
+            # Normalize MIME type (remove parameters like charset)
+            detected_mime = detected_mime.split(';')[0].strip().lower()
+            
+            # Check if detected MIME matches expected MIME types
+            if detected_mime not in expected_mimes:
+                raise ValidationError(
+                    f"File content type mismatch: '{file_obj.name}' appears to be "
+                    f"'{detected_mime}' but has extension '{ext}'. "
+                    f"Expected types: {', '.join(expected_mimes)}. "
+                    f"This may indicate a malicious file."
+                )
     
     @classmethod
     def validate_filename(cls, filename):
@@ -133,7 +272,13 @@ class FileValidator:
     @classmethod
     def validate_file(cls, file_obj):
         """
-        Comprehensive file validation.
+        Comprehensive file validation with content verification.
+        
+        Performs multiple security checks:
+        1. File size validation
+        2. Filename validation (path traversal, reserved names)
+        3. Extension validation (allow-list)
+        4. Content validation (prevents file type spoofing)
         
         Args:
             file_obj: Django UploadedFile object
@@ -144,3 +289,4 @@ class FileValidator:
         cls.validate_file_size(file_obj)
         cls.validate_filename(file_obj.name)
         cls.validate_file_extension(file_obj.name)
+        cls.validate_file_content(file_obj)  # Content-based validation
