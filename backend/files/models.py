@@ -22,10 +22,10 @@ class File(models.Model):
     size = models.BigIntegerField()  # File size in bytes
     
     # User tracking
-    user_id = models.CharField(max_length=255, db_index=True)
+    user_id = models.CharField(max_length=255)
     
     # Deduplication fields
-    file_hash = models.CharField(max_length=64, db_index=True)  # SHA-256
+    file_hash = models.CharField(max_length=64)  # SHA-256
     is_reference = models.BooleanField(default=False)
     original_file = models.ForeignKey(
         'self', 
@@ -36,16 +36,22 @@ class File(models.Model):
     )
     
     # Metadata
-    uploaded_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         db_table = 'file_uploads'
         ordering = ['-uploaded_at']
         indexes = [
-            models.Index(fields=['user_id', 'uploaded_at']),
-            models.Index(fields=['user_id', 'file_type']),
-            models.Index(fields=['file_hash']),
-            models.Index(fields=['is_reference']),
+            # User-based queries (most common)
+            models.Index(fields=['user_id', 'uploaded_at'], name='idx_user_uploaded'),
+            models.Index(fields=['user_id', 'file_type'], name='idx_user_filetype'),
+            models.Index(fields=['user_id', 'size'], name='idx_user_size'),
+            
+            # Deduplication (critical - every upload)
+            models.Index(fields=['file_hash', 'is_reference'], name='idx_hash_ref'),
+            
+            # Statistics queries
+            models.Index(fields=['is_reference'], name='idx_is_reference'),
         ]
     
     def __str__(self):
