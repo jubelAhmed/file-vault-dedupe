@@ -20,8 +20,8 @@ export const FileUpload: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['deduplicationStats', userId] });
       setSelectedFile(null);
     },
-    onError: (error) => {
-      setError('Failed to upload file. Please try again.');
+    onError: (error: any) => {
+      setError(`${error?.response?.data?.error || 'Please try again.'}. Failed to upload `);
       console.error('Upload error:', error);
     },
   });
