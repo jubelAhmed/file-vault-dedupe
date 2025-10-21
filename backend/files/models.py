@@ -46,6 +46,7 @@ class File(models.Model):
             models.Index(fields=['user_id', 'uploaded_at'], name='idx_user_uploaded'),
             models.Index(fields=['user_id', 'file_type'], name='idx_user_filetype'),
             models.Index(fields=['user_id', 'size'], name='idx_user_size'),
+            models.Index(fields=['user_id', 'original_filename'], name='idx_user_filename'),
             
             # Deduplication (critical - every upload)
             models.Index(fields=['file_hash', 'is_reference'], name='idx_hash_ref'),
