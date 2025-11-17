@@ -97,8 +97,11 @@ cd backend
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Install dependencies
+# Install production dependencies
 pip install -r requirements.txt
+
+# Install development dependencies (linting, type checking)
+pip install -r requirements-dev.txt
 
 # Create environment file (.env)
 cat > .env << EOF
@@ -186,6 +189,26 @@ python manage.py test files.tests.test_services
 
 Test coverage: **97%+**
 
+## Code Quality & Linting
+
+The project uses Ruff for formatting, import sorting, and linting, plus MyPy for type checking.
+
+```bash
+cd backend
+
+# Check code quality (formatting, imports, linting, types)
+./lint.sh check
+
+# Auto-fix issues (formatting, imports, linting)
+./lint.sh fix
+```
+
+**Development Dependencies:**
+- `ruff` - Fast linter, formatter, and import sorter (replaces Black + isort)
+- `mypy` - Static type checker
+
+Install with: `pip install -r requirements-dev.txt`
+
 ## Project Structure
 
 ```
@@ -206,7 +229,9 @@ file-vault-dedupe/
 │   │   │   └── content_extraction_service.py
 │   │   ├── tasks.py              # Celery tasks
 │   │   └── tests/                # Test suite
-│   └── requirements.txt
+│   ├── requirements.txt          # Production dependencies
+│   ├── requirements-dev.txt      # Development dependencies (linting, type checking)
+│   └── lint.sh                   # Code quality script
 ├── frontend/
 │   ├── src/
 │   │   ├── components/            # React components

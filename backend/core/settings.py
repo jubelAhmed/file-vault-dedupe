@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -25,94 +26,96 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-default-key-for-development')
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-default-key-for-development")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 
 # Configure for both local and production
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+
 
 # CSRF trusted origins - Dynamic configuration
 def get_csrf_trusted_origins():
     """Generate CSRF trusted origins dynamically."""
     origins = []
-    
+
     # Generate port ranges dynamically
     def get_ports():
         ports = []
         # Common development port ranges
         ports.extend(range(3000, 3009))  # 3000-3008 (React dev servers)
-        ports.extend([8080, 4200, 5173])  
+        ports.extend([8080, 4200, 5173])
         return ports
-    
-    hosts = ['localhost', '127.0.0.1']
-    protocols = ['http', 'https']
-    
+
+    hosts = ["localhost", "127.0.0.1"]
+    protocols = ["http", "https"]
+
     # Generate combinations
     for host in hosts:
         for port in get_ports():
             for protocol in protocols:
                 origins.append(f"{protocol}://{host}:{port}")
-    
+
     # Add custom local origins from environment
-    custom_origins = os.environ.get('CSRF_LOCAL_ORIGINS', '').split(',')
+    custom_origins = os.environ.get("CSRF_LOCAL_ORIGINS", "").split(",")
     origins.extend([origin.strip() for origin in custom_origins if origin.strip()])
-    
+
     # Add production origins from environment
-    prod_origins = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+    prod_origins = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
     origins.extend([origin.strip() for origin in prod_origins if origin.strip()])
-    
+
     return origins
+
 
 CSRF_TRUSTED_ORIGINS = get_csrf_trusted_origins()
 
 # Application definition
 
 INSTALLED_APPS = [
-  "django.contrib.admin",
-  "django.contrib.auth",
-  "django.contrib.contenttypes",
-  "django.contrib.sessions",
-  "django.contrib.messages",
-  "django.contrib.staticfiles",
-  "rest_framework",
-  "corsheaders",
-  "django_filters",
-  "files",
-  "django_celery_results",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "corsheaders",
+    "django_filters",
+    "files",
+    "django_celery_results",
 ]
 
 MIDDLEWARE = [
-  "django.middleware.security.SecurityMiddleware",
-  "whitenoise.middleware.WhiteNoiseMiddleware",
-  "django.contrib.sessions.middleware.SessionMiddleware",
-  "corsheaders.middleware.CorsMiddleware",
-  "core.middleware.user_id.UserIdMiddleware",
-  "core.middleware.rate_limit.RateLimitMiddleware",
-  "django.middleware.common.CommonMiddleware",
-  "django.middleware.csrf.CsrfViewMiddleware",
-  "django.contrib.auth.middleware.AuthenticationMiddleware",
-  "django.contrib.messages.middleware.MessageMiddleware",
-  "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "core.middleware.user_id.UserIdMiddleware",
+    "core.middleware.rate_limit.RateLimitMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"
 
 TEMPLATES = [
-  {
-    "BACKEND": "django.template.backends.django.DjangoTemplates",
-    "DIRS": [],
-    "APP_DIRS": True,
-    "OPTIONS": {
-      "context_processors": [
-        "django.template.context_processors.debug",
-        "django.template.context_processors.request",
-        "django.contrib.auth.context_processors.auth",
-        "django.contrib.messages.context_processors.messages",
-      ],
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
     },
-  },
 ]
 
 WSGI_APPLICATION = "core.wsgi.application"
@@ -122,15 +125,15 @@ WSGI_APPLICATION = "core.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-  "default": {
-    "ENGINE": "django.db.backends.sqlite3",
-    "NAME": os.path.join(BASE_DIR, 'data', 'db.sqlite3'),
-  }
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.path.join(BASE_DIR, "data", "db.sqlite3"),
+    }
 }
 
 # Cache configuration for rate limiting
 # Use LocMemCache for development/testing, Redis/Memcached for production
-# 
+#
 # For production with Redis, use:
 # CACHES = {
 #     'default': {
@@ -150,12 +153,10 @@ DATABASES = {
 #     }
 # }
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000
-        }
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+        "OPTIONS": {"MAX_ENTRIES": 1000},
     }
 }
 
@@ -164,18 +165,18 @@ CACHES = {
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-  {
-    "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-  },
-  {
-    "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-  },
-  {
-    "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-  },
-  {
-    "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-  },
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
 ]
 
 
@@ -195,12 +196,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Media files (removed - defined below)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -210,87 +209,122 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # REST Framework settings (moved to bottom for better organization)
 
 # CORS settings - Environment-aware configuration
-CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True') == 'True'  # False in production
+CORS_ALLOW_ALL_ORIGINS = (
+    os.environ.get("CORS_ALLOW_ALL_ORIGINS", "True") == "True"
+)  # False in production
 CORS_ALLOW_CREDENTIALS = True
 
 # Production CORS origins (when CORS_ALLOW_ALL_ORIGINS is False)
 CORS_ALLOWED_ORIGINS = []
-PRODUCTION_CORS_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
-if PRODUCTION_CORS_ORIGINS and PRODUCTION_CORS_ORIGINS != ['']:
-    CORS_ALLOWED_ORIGINS.extend([origin.strip() for origin in PRODUCTION_CORS_ORIGINS if origin.strip()])
+PRODUCTION_CORS_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",")
+if PRODUCTION_CORS_ORIGINS and PRODUCTION_CORS_ORIGINS != [""]:
+    CORS_ALLOWED_ORIGINS.extend(
+        [origin.strip() for origin in PRODUCTION_CORS_ORIGINS if origin.strip()]
+    )
 CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-    'userid',  # Custom header for our API
-    'UserId',  # Custom header for our API
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+    "userid",  # Custom header for our API
+    "UserId",  # Custom header for our API
 ]
 CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
 ]
 CORS_EXPOSE_HEADERS = [
-    'x-user-id',  # Expose UserId in response headers
+    "x-user-id",  # Expose UserId in response headers
 ]
 CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours
 CORS_ALLOW_PRIVATE_NETWORK = True
 
 
 # Storage Settings
-MEDIA_ROOT = BASE_DIR / 'media'
-MEDIA_URL = '/media/'
+MEDIA_ROOT = str(BASE_DIR / "media")
+MEDIA_URL = "/media/"
 
 # Rate Limiting - configurable via environment variables
-RATE_LIMIT_CALLS = int(os.getenv('MAX_CALLS', '2'))
-RATE_LIMIT_WINDOW = int(os.getenv('TIME_WINDOW', '1'))  # seconds
+RATE_LIMIT_CALLS = int(os.getenv("MAX_CALLS", "2"))
+RATE_LIMIT_WINDOW = int(os.getenv("TIME_WINDOW", "1"))  # seconds
 
 # Storage Quota - configurable via environment variables
-STORAGE_QUOTA_PER_USER = int(os.getenv('STORAGE_QUOTA_PER_USER', '10485760'))  # 10MB default
+STORAGE_QUOTA_PER_USER = int(os.getenv("STORAGE_QUOTA_PER_USER", "10485760"))  # 10MB default
 
 # Pagination
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny'
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.MultiPartParser",
+        "rest_framework.parsers.FormParser",
     ],
-    'DEFAULT_PARSER_CLASSES': [
-        'rest_framework.parsers.JSONParser',
-        'rest_framework.parsers.MultiPartParser',
-        'rest_framework.parsers.FormParser',
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 50,
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 50,
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend',
-    ]
 }
 
 # Celery Configuration
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'django-db')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes max
 CELERY_RESULT_EXTENDED = True
 
 # Search Indexing Configuration
-SEARCH_INDEX_MIN_WORD_LENGTH = int(os.environ.get('SEARCH_INDEX_MIN_WORD_LENGTH', '3'))
-SEARCH_INDEX_MAX_WORD_LENGTH = int(os.environ.get('SEARCH_INDEX_MAX_WORD_LENGTH', '50'))
-SEARCH_INDEX_STOP_WORDS = set([
-    'the', 'a', 'an', 'and', 'or', 'but', 'is', 'are', 'was', 'were',
-    'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
-    'will', 'would', 'should', 'could', 'may', 'might', 'must', 'can',
-    'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'as'
-])
+SEARCH_INDEX_MIN_WORD_LENGTH = int(os.environ.get("SEARCH_INDEX_MIN_WORD_LENGTH", "3"))
+SEARCH_INDEX_MAX_WORD_LENGTH = int(os.environ.get("SEARCH_INDEX_MAX_WORD_LENGTH", "50"))
+SEARCH_INDEX_STOP_WORDS = {
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "but",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "should",
+    "could",
+    "may",
+    "might",
+    "must",
+    "can",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "with",
+    "by",
+    "from",
+    "as",
+}
