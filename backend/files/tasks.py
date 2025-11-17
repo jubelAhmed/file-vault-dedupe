@@ -8,7 +8,7 @@ from celery import shared_task
 from django.core.exceptions import ObjectDoesNotExist
 from files.models import File
 from files.services.content_extraction_service import ContentExtractionService
-from files.services.search_indexing_service import SearchIndexingService
+from files.services.search_service import SearchService
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ def index_file_content_task(self, file_id: str):
         
         # Index the content
         logger.info(f"Indexing content for file: {file_id}")
-        keywords_indexed = SearchIndexingService.index_file_content(
+        keywords_indexed = SearchService.index_file_content(
             file_instance, 
             text_content
         )
@@ -144,7 +144,7 @@ def remove_file_from_index_task(self, file_id: str):
             }
         
         # Remove from index
-        removed_count = SearchIndexingService.remove_file_from_index(file_instance)
+        removed_count = SearchService.remove_file_from_index(file_instance)
         
         logger.info(f"Removed file {file_id} from {removed_count} search indexes")
         

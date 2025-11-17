@@ -270,5 +270,5 @@ This project is open source and available under the MIT License.
 
 ## 👤 Author
 
-Built as a portfolio project demonstrating full-stack development skills with Django, React, and modern DevOps practices. 
+**Jubel Ahmed** 
 

@@ -2,7 +2,11 @@
 Content Extraction Service
 
 Extracts text content from various file types for search indexing.
-Supports PDF, DOCX, TXT, CSV, Excel, and basic image OCR.
+Supports:
+- Text files: TXT, CSV, XML, HTML, RTF, JSON, YAML
+- Documents: PDF, DOC, DOCX, ODT
+- Spreadsheets: XLS, XLSX, ODS
+- Presentations: PPT, PPTX, ODP
 """
 import os
 import logging
@@ -19,13 +23,34 @@ class ContentExtractionService:
     
     # Supported file types for content extraction
     SUPPORTED_MIME_TYPES = {
+        # Text files
         'text/plain',
         'text/csv',
         'text/xml',
+        'text/html',
+        'text/rtf',
+        'application/json',
+        'application/xml',
+        'application/yaml',
+        'application/x-yaml',
+        
+        # PDF
         'application/pdf',
+        
+        # Word documents
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',  # DOCX
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',  # XLSX
         'application/msword',  # DOC
+        'application/vnd.oasis.opendocument.text',  # ODT
+        
+        # Spreadsheets
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',  # XLSX
+        'application/vnd.ms-excel',  # XLS
+        'application/vnd.oasis.opendocument.spreadsheet',  # ODS
+        
+        # Presentations
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',  # PPTX
+        'application/vnd.ms-powerpoint',  # PPT
+        'application/vnd.oasis.opendocument.presentation',  # ODP
     }
     
     @staticmethod
@@ -49,8 +74,8 @@ class ContentExtractionService:
             return None
         
         try:
-            # Plain text files
-            if mime_type.startswith('text/'):
+            # Plain text files (including JSON, XML, YAML, HTML, RTF)
+            if mime_type.startswith('text/') or mime_type in ['application/json', 'application/xml', 'application/yaml', 'application/x-yaml']:
                 return ContentExtractionService._extract_text_file(file_path)
             
             # PDF files
@@ -58,12 +83,16 @@ class ContentExtractionService:
                 return ContentExtractionService._extract_pdf(file_path)
             
             # Word documents
-            elif 'wordprocessingml' in mime_type or mime_type == 'application/msword':
+            elif 'wordprocessingml' in mime_type or mime_type == 'application/msword' or mime_type == 'application/vnd.oasis.opendocument.text':
                 return ContentExtractionService._extract_docx(file_path)
             
-            # Excel files
-            elif 'spreadsheetml' in mime_type:
+            # Excel/Spreadsheet files
+            elif 'spreadsheetml' in mime_type or mime_type == 'application/vnd.ms-excel' or mime_type == 'application/vnd.oasis.opendocument.spreadsheet':
                 return ContentExtractionService._extract_xlsx(file_path)
+            
+            # PowerPoint/Presentation files
+            elif 'presentationml' in mime_type or mime_type == 'application/vnd.ms-powerpoint' or mime_type == 'application/vnd.oasis.opendocument.presentation':
+                return ContentExtractionService._extract_pptx(file_path)
             
             else:
                 logger.warning(f"No extraction handler for MIME type: {mime_type}")
@@ -181,6 +210,32 @@ class ContentExtractionService:
             return None
         except Exception as e:
             logger.error(f"Error extracting XLSX {file_path}: {str(e)}")
+            return None
+    
+    @staticmethod
+    def _extract_pptx(file_path: str) -> Optional[str]:
+        """Extract text from PowerPoint presentations."""
+        try:
+            from pptx import Presentation
+            
+            prs = Presentation(file_path)
+            text_content = []
+            
+            # Extract from slides
+            for slide_num, slide in enumerate(prs.slides):
+                for shape in slide.shapes:
+                    if hasattr(shape, "text") and shape.text:
+                        text_content.append(shape.text)
+            
+            result = '\n'.join(text_content)
+            logger.info(f"Extracted {len(result)} characters from PPTX")
+            return result if result else None
+            
+        except ImportError:
+            logger.warning("python-pptx not installed. Cannot extract PPTX content.")
+            return None
+        except Exception as e:
+            logger.error(f"Error extracting PPTX {file_path}: {str(e)}")
             return None
     
     @staticmethod

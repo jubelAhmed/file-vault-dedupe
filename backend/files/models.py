@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 import uuid
 import os
 
@@ -105,10 +106,18 @@ class UserStorage(models.Model):
 
 class FileSearchIndex(models.Model):
     """
-    Stores keywords and their associated file references for search indexing.
-    Enables efficient keyword-based file search across the system.
+    Index for finding files based on keywords extracted from file content.
+    
+    This model enables content-based file search by storing keywords extracted
+    from file content (PDF, DOCX, TXT, etc.) and maintaining relationships to
+    files that contain those keywords.
+    
+    Usage:
+        - Keywords are extracted from file content during upload
+        - Search by keyword to find all files containing that keyword
+        - Supports user-filtered search results
     """
-    keyword = models.CharField(max_length=255, unique=True)
+    keyword = models.CharField(max_length=255, unique=True, db_index=True)
     files = models.ManyToManyField(
         'File',
         related_name='search_keywords',
@@ -129,7 +138,75 @@ class FileSearchIndex(models.Model):
     def __str__(self):
         return f"{self.keyword} ({self.files.count()} files)"
     
+    def clean(self):
+        """Normalize keyword before saving"""
+        if self.keyword:
+            self.keyword = self.keyword.lower().strip()
+            if not self.keyword:
+                raise ValidationError({'keyword': 'Keyword cannot be empty'})
+    
+    def save(self, *args, **kwargs):
+        """Override save to ensure keyword is normalized"""
+        self.full_clean()
+        super().save(*args, **kwargs)
+    
     @property
     def file_count(self):
         """Get the number of files associated with this keyword"""
         return self.files.count()
+    
+    def get_files_for_user(self, user_id):
+        """
+        Get files containing this keyword, filtered by user_id.
+        
+        This method finds all files that contain the keyword in their content,
+        restricted to files belonging to the specified user.
+        
+        Args:
+            user_id: User ID to filter files by
+            
+        Returns:
+            QuerySet of File instances containing this keyword for the user
+        """
+        return self.files.filter(user_id=user_id)
+    
+    @classmethod
+    def find_files_by_keyword(cls, keyword, user_id=None):
+        """
+        Find files that contain the given keyword in their content.
+        
+        This is the main method for content-based file search. It looks up
+        files based on keywords extracted from their content.
+        
+        Args:
+            keyword: Keyword to search for (will be normalized to lowercase)
+            user_id: Optional user ID to filter results by user
+            
+        Returns:
+            QuerySet of File instances containing the keyword
+        """
+        keyword = keyword.lower().strip()
+        if not keyword:
+            return File.objects.none()
+        
+        try:
+            search_index = cls.objects.filter(keyword=keyword).first()
+            if not search_index:
+                return File.objects.none()
+            
+            files = search_index.files.all()
+            if user_id:
+                files = files.filter(user_id=user_id)
+            
+            return files
+        except Exception:
+            return File.objects.none()
+    
+    def is_orphaned(self):
+        """
+        Check if this keyword has no associated files (orphaned).
+        
+        Returns:
+            bool: True if keyword has no files, False otherwise
+        """
+        return self.files.count() == 0

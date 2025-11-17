@@ -4,7 +4,7 @@
 
 ### 1. Search by Keyword
 
-**Endpoint:** `GET /api/files/search_by_keyword/`
+**Endpoint:** `GET /api/files/search/`
 
 **Description:** Search files by keyword(s) extracted from file content.
 
@@ -19,11 +19,11 @@
 
 ```bash
 # Single keyword search
-curl "http://localhost:8000/api/files/search_by_keyword/?keyword=contract" \
+curl "http://localhost:8000/api/files/search/?keyword=contract" \
   -H "UserId: user123"
 
 # Multiple keywords (OR search)
-curl "http://localhost:8000/api/files/search_by_keyword/?keywords=contract,agreement,invoice" \
+curl "http://localhost:8000/api/files/search/?keywords=contract,agreement,invoice" \
   -H "UserId: user123"
 ```
 
@@ -160,30 +160,30 @@ curl -X POST http://localhost:8000/api/files/ \
 
 | Method | Endpoint | Description | New/Modified |
 |--------|----------|-------------|--------------|
-| GET | `/api/files/search_by_keyword/` | Search files by keyword(s) | **New** |
+| GET | `/api/files/search/` | Search files by keyword(s) | **New** |
 | GET | `/api/files/index_stats/` | Get index statistics | **New** |
 
 ---
 
 ## Python SDK Examples
 
-### Using SearchIndexingService Directly
+### Using SearchService Directly
 
 ```python
-from files.services.search_indexing_service import SearchIndexingService
+from files.services.search_service import SearchService
 
 # Search by single keyword
-files = SearchIndexingService.search_files_by_keyword('contract', user_id='user123')
+files = SearchService.search_files_by_keyword('contract', user_id='user123')
 print(f"Found {len(files)} files")
 
 # Search by multiple keywords (OR)
-files = SearchIndexingService.search_files_by_keywords(
+files = SearchService.search_files_by_keywords(
     ['contract', 'agreement', 'invoice'], 
     user_id='user123'
 )
 
 # Get statistics
-stats = SearchIndexingService.get_keyword_stats()
+stats = SearchService.get_keyword_stats()
 print(f"Total keywords: {stats['total_keywords']}")
 ```
 
@@ -221,11 +221,11 @@ curl -X POST http://localhost:8000/api/files/ \
 sleep 5
 
 # 3. Search for keyword "contract"
-curl "http://localhost:8000/api/files/search_by_keyword/?keyword=contract" \
+curl "http://localhost:8000/api/files/search/?keyword=contract" \
   -H "UserId: testuser"
 
 # 4. Search for multiple keywords
-curl "http://localhost:8000/api/files/search_by_keyword/?keywords=contract,agreement,test" \
+curl "http://localhost:8000/api/files/search/?keywords=contract,agreement,test" \
   -H "UserId: testuser"
 
 # 5. Get index statistics
@@ -247,7 +247,7 @@ curl -X DELETE http://localhost:8000/api/files/{file-id}/ \
 // Search by keyword
 const searchByKeyword = async (keyword: string, userId: string) => {
   const response = await fetch(
-    `http://localhost:8000/api/files/search_by_keyword/?keyword=${encodeURIComponent(keyword)}`,
+    `http://localhost:8000/api/files/search/?keyword=${encodeURIComponent(keyword)}`,
     {
       headers: {
         'UserId': userId
@@ -263,7 +263,7 @@ const searchByKeyword = async (keyword: string, userId: string) => {
 const searchByKeywords = async (keywords: string[], userId: string) => {
   const keywordsParam = keywords.join(',');
   const response = await fetch(
-    `http://localhost:8000/api/files/search_by_keyword/?keywords=${encodeURIComponent(keywordsParam)}`,
+    `http://localhost:8000/api/files/search/?keywords=${encodeURIComponent(keywordsParam)}`,
     {
       headers: {
         'UserId': userId
@@ -436,7 +436,7 @@ Update your existing Postman collection with these new endpoints:
           }
         ],
         "url": {
-          "raw": "{{baseUrl}}/api/files/search_by_keyword/?keyword=contract",
+          "raw": "{{baseUrl}}/api/files/search/?keyword=contract",
           "host": ["{{baseUrl}}"],
           "path": ["api", "files", "search_by_keyword"],
           "query": [

@@ -181,16 +181,16 @@ python manage.py shell
 
 ### Searching by Keywords
 
-Use the SearchIndexingService to search for files by keywords:
+Use the SearchService to search for files by keywords:
 
 ```python
-from files.services.search_indexing_service import SearchIndexingService
+from files.services.search_service import SearchService
 
 # Search by single keyword
-files = SearchIndexingService.search_files_by_keyword('contract', user_id='user123')
+files = SearchService.search_files_by_keyword('contract', user_id='user123')
 
 # Search by multiple keywords (OR operation)
-files = SearchIndexingService.search_files_by_keywords(['contract', 'agreement'], user_id='user123')
+files = SearchService.search_files_by_keywords(['contract', 'agreement'], user_id='user123')
 ```
 
 ## Supported File Types
@@ -326,16 +326,16 @@ To add a search endpoint, update `files/views.py`:
 
 ```python
 @action(detail=False, methods=['get'])
-def search_by_keyword(self, request):
+def search(self, request):
     """Search files by keyword."""
     keyword = request.query_params.get('keyword', '').strip()
     
     if not keyword:
         return Response({'error': 'Keyword required'}, status=400)
     
-    from files.services.search_indexing_service import SearchIndexingService
+    from files.services.search_service import SearchService
     
-    files = SearchIndexingService.search_files_by_keyword(
+    files = SearchService.search_files_by_keyword(
         keyword, 
         user_id=request.user_id
     )
@@ -346,7 +346,7 @@ def search_by_keyword(self, request):
 
 Then access via:
 ```bash
-GET /api/files/search_by_keyword/?keyword=contract
+GET /api/files/search/?keyword=contract
 ```
 
 ## Additional Resources

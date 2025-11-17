@@ -17,7 +17,7 @@ from .serializers import (
 )
 from .services.deduplication_service import DeduplicationService
 from .services.storage_service import StorageService, StorageQuotaExceeded
-from .services.search_indexing_service import SearchIndexingService
+from .services.search_service import SearchService
 from .utils.validators import FileValidator
 from .filters import FileFilter
 from .tasks import index_file_content_task, remove_file_from_index_task
@@ -236,16 +236,22 @@ class FileViewSet(viewsets.ModelViewSet):
             )
     
     @action(detail=False, methods=['get'])
-    def search_by_keyword(self, request):
+    def search(self, request):
         """
-        Search files by keyword(s) extracted from file content.
+        Search files by keyword(s) extracted from file CONTENT.
+        
+        This endpoint searches inside file content (PDF, DOCX, TXT, etc.), not filenames.
+        For filename search, use: GET /api/files/?search=filename
         
         Query Parameters:
-            - keyword: Single keyword to search for
-            - keywords: Comma-separated list of keywords (OR search)
+            - keyword: Single keyword to search for in file content
+            - keywords: Comma-separated list of keywords (OR search) in file content
         
         Returns:
-            List of files matching the keyword(s)
+            List of files whose content contains the keyword(s)
+        
+        Example:
+            GET /api/files/search/?keyword=contract
         """
         try:
             # Get query parameters
@@ -261,14 +267,14 @@ class FileViewSet(viewsets.ModelViewSet):
             # Perform search
             if keyword:
                 # Single keyword search
-                files = SearchIndexingService.search_files_by_keyword(
+                files = SearchService.search_files_by_keyword(
                     keyword, 
                     user_id=request.user_id
                 )
             else:
                 # Multiple keywords search (OR operation)
                 keywords_list = [k.strip() for k in keywords_param.split(',') if k.strip()]
-                files = SearchIndexingService.search_files_by_keywords(
+                files = SearchService.search_files_by_keywords(
                     keywords_list, 
                     user_id=request.user_id
                 )
@@ -297,7 +303,7 @@ class FileViewSet(viewsets.ModelViewSet):
             - Top keyword with most file references
         """
         try:
-            stats = SearchIndexingService.get_keyword_stats()
+            stats = SearchService.get_keyword_stats()
             return Response(stats)
         except Exception as e:
             return Response(

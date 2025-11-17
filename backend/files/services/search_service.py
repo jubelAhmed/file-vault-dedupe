@@ -1,8 +1,8 @@
 """
-Search Indexing Service
+Search Service
 
 Manages the FileSearchIndex model, extracts keywords from text content,
-and maintains file references for efficient search.
+and maintains file references for efficient file content search.
 """
 import re
 import logging
@@ -15,8 +15,8 @@ from files.models import File, FileSearchIndex
 logger = logging.getLogger(__name__)
 
 
-class SearchIndexingService:
-    """Service for managing search indexes and keyword extraction."""
+class SearchService:
+    """Service for managing file content search and keyword extraction."""
     
     @staticmethod
     def extract_keywords(text: str) -> Set[str]:
@@ -85,7 +85,7 @@ class SearchIndexingService:
             return 0
         
         # Extract keywords
-        keywords = SearchIndexingService.extract_keywords(text_content)
+        keywords = SearchService.extract_keywords(text_content)
         
         if not keywords:
             logger.warning(f"No keywords extracted from file {file_instance.id}")
@@ -159,6 +159,8 @@ class SearchIndexingService:
         """
         Search files by keyword.
         
+        Uses the FileSearchIndex model's find_files_by_keyword method.
+        
         Args:
             keyword: Keyword to search for
             user_id: Optional user ID to filter results by user
@@ -166,29 +168,11 @@ class SearchIndexingService:
         Returns:
             List of File instances matching the keyword
         """
-        keyword = keyword.lower().strip()
-        
-        if not keyword:
-            return []
-        
         try:
-            # Get search index entry
-            search_index = FileSearchIndex.objects.filter(keyword=keyword).first()
-            
-            if not search_index:
-                logger.info(f"No search index found for keyword: {keyword}")
-                return []
-            
-            # Get files
-            files = search_index.files.all()
-            
-            # Filter by user if specified
-            if user_id:
-                files = files.filter(user_id=user_id)
-            
-            logger.info(f"Found {files.count()} files for keyword: {keyword}")
-            return list(files)
-            
+            files = FileSearchIndex.find_files_by_keyword(keyword, user_id)
+            file_list = list(files)
+            logger.info(f"Found {len(file_list)} files for keyword: {keyword}")
+            return file_list
         except Exception as e:
             logger.error(f"Error searching for keyword '{keyword}': {str(e)}")
             return []
