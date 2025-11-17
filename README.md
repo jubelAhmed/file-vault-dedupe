@@ -1,6 +1,6 @@
-# Abnormal File Vault
+# File Vault Dedupe
 
-A full-stack file management application built with React and Django, designed for efficient file handling and storage.
+A full-stack file management system with intelligent deduplication, content search, and storage quota management. Built with Django REST Framework and React.
 
 ## 🚀 Technology Stack
 
@@ -36,6 +36,14 @@ Before you begin, ensure you have installed:
 ```bash
 docker-compose up --build
 ```
+
+This will start:
+- **Redis** - Message broker for Celery (port 6379)
+- **Backend** - Django API server (port 8000)
+- **Celery** - Background worker for file indexing
+- **Frontend** - React application (port 3000)
+
+All services are automatically configured and connected.
 
 ### Local Development Setup
 
@@ -188,7 +196,7 @@ docker-compose up --build
 ## 🗄️ Project Structure
 
 ```
-file-hub/
+file-vault-dedupe/
 ├── backend/                # Django backend
 │   ├── files/             # Main application
 │   │   ├── models.py      # Data models
@@ -203,7 +211,10 @@ file-hub/
 │   │   ├── services/      # API services
 │   │   └── types/         # TypeScript types
 │   └── package.json      # Node.js dependencies
-└── docker-compose.yml    # Docker composition
+├── postman/               # Postman API collections
+│   ├── File-Vault-Dedupe-API.postman_collection.json
+│   └── File-Vault-Dedupe-Environment.postman_environment.json
+└── docker-compose.yml    # Docker composition (includes Redis, Backend, Celery, Frontend)
 ```
 
 ## 🔧 Development Features
@@ -234,40 +245,30 @@ file-hub/
    python manage.py migrate
    ```
 
-# Project Submission Instructions
+## 🎯 Key Features
 
-## Preparing Your Submission
+- **Intelligent Deduplication**: Automatically detects and eliminates duplicate files across all users, saving storage space
+- **Content-Based Search**: Search files by keywords extracted from their content (PDF, DOCX, XLSX, TXT, and more)
+- **Storage Quota Management**: Per-user storage limits with real-time tracking and statistics
+- **Async Processing**: Background file indexing using Celery for non-blocking uploads
+- **Security First**: File validation, content-type checking, rate limiting, and user isolation
+- **RESTful API**: Comprehensive API with filtering, pagination, and search capabilities
 
-1. Before creating your submission zip file, ensure:
-   - All features are implemented and working as expected
-   - All tests are passing
-   - The application runs successfully locally
-   - Remove any unnecessary files or dependencies
-   - Clean up any debug/console logs
+## 📚 Documentation
 
-2. Create the submission zip file:
-   ```bash
-   # Activate your backend virtual environment first
-   cd backend
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   
-   # Run the submission script from the project root
-   cd ..
-   python create_submission_zip.py
-   ```
+- [API Documentation](backend/API_ENDPOINTS.md) - Complete API reference
+- [Celery Setup Guide](backend/CELERY_SETUP.md) - Background task processing setup
+- [Postman Collection](postman/) - API testing collections
 
-   The script will:
-   - Create a zip file named `username_YYYYMMDD.zip` (e.g., `johndoe_20240224.zip`)
-   - Respect .gitignore rules to exclude unnecessary files
-   - Preserve file timestamps
-   - Show you a list of included files and total size
-   - Warn you if the zip is unusually large
+## 🤝 Contributing
 
-3. Verify your submission zip file:
-   - Extract the zip file to a new directory
-   - Ensure all necessary files are included
-   - Verify that no unnecessary files (like node_modules, __pycache__, etc.) are included
-   - Test the application from the extracted files to ensure everything works
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-Once you have prepared the project for submission follow the instructions in the email to submit the project along with the video. 
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+## 👤 Author
+
+Built as a portfolio project demonstrating full-stack development skills with Django, React, and modern DevOps practices. 
 

@@ -1,10 +1,10 @@
 {
 	"info": {
-		"_postman_id": "abnormal-file-hub-api",
-		"name": "Abnormal File Hub API",
-		"description": "Complete API collection for testing the Abnormal File Hub with deduplication features",
+		"_postman_id": "file-vault-dedupe-api",
+		"name": "File Vault Dedupe API",
+		"description": "Complete API collection for testing the File Vault Dedupe with deduplication features",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "abnormal-file-hub"
+		"_exporter_id": "file-vault-dedupe"
 	},
 	"item": [
 		{
@@ -518,7 +518,7 @@
 					"    const fileField = pm.request.body.formdata.find(field => field.key === 'file');",
 					"    if (fileField && !fileField.src) {",
 					"        // Create a simple test file content",
-					"        const testContent = 'This is a test file for Abnormal File Hub API testing.\\nTimestamp: ' + new Date().toISOString();",
+					"        const testContent = 'This is a test file for File Vault Dedupe API testing.\\nTimestamp: ' + new Date().toISOString();",
 					"        const blob = new Blob([testContent], { type: 'text/plain' });",
 					"        fileField.src = blob;",
 					"    }",

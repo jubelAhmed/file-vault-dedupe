@@ -101,3 +101,35 @@ class UserStorage(models.Model):
         if self.original_storage_used == 0:
             return 0.0
         return (self.storage_savings / self.original_storage_used) * 100
+
+
+class FileSearchIndex(models.Model):
+    """
+    Stores keywords and their associated file references for search indexing.
+    Enables efficient keyword-based file search across the system.
+    """
+    keyword = models.CharField(max_length=255, unique=True)
+    files = models.ManyToManyField(
+        'File',
+        related_name='search_keywords',
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'file_search_index'
+        verbose_name = 'File Search Index'
+        verbose_name_plural = 'File Search Indexes'
+        ordering = ['keyword']
+        indexes = [
+            models.Index(fields=['keyword'], name='idx_search_keyword'),
+        ]
+    
+    def __str__(self):
+        return f"{self.keyword} ({self.files.count()} files)"
+    
+    @property
+    def file_count(self):
+        """Get the number of files associated with this keyword"""
+        return self.files.count()

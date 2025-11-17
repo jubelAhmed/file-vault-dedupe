@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import File, UserStorage
+from .models import File, UserStorage, FileSearchIndex
 
 
 
@@ -18,3 +18,12 @@ class UserStorageAdmin(admin.ModelAdmin):
     ordering = ('-last_updated',)
 
 admin.site.register(UserStorage, UserStorageAdmin)
+
+class FileSearchIndexAdmin(admin.ModelAdmin):
+    list_display = ('keyword', 'file_count', 'created_at', 'updated_at')
+    search_fields = ('keyword',)
+    readonly_fields = ('created_at', 'updated_at', 'file_count')
+    ordering = ('keyword',)
+    filter_horizontal = ('files',)
+
+admin.site.register(FileSearchIndex, FileSearchIndexAdmin)

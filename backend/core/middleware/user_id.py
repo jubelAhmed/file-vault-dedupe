@@ -4,7 +4,7 @@ UserId middleware for extracting and validating UserId header from requests.
 import re
 from django.http import JsonResponse
 from django.utils.deprecation import MiddlewareMixin
-
+from django.conf import settings
 
 class UserIdMiddleware(MiddlewareMixin):
     """
@@ -41,18 +41,26 @@ class UserIdMiddleware(MiddlewareMixin):
         
         if any(request.path.startswith(path) for path in skip_paths):
             return None
+
+        
         
         # Extract UserId from header
         user_id = request.headers.get('UserId') or request.headers.get('userid')
         
         if not user_id:
-            return JsonResponse(
-                {
-                    'error': 'UserId header is required',
-                    'message': 'Please include a valid UserId header in your request'
-                },
-                status=401
-            )
+            # Allow Browsable API in DEBUG mode for browser requests
+            if settings.DEBUG and self._is_browser_request(request):
+                # Set a default user_id for development/testing
+                request.user_id = 'dev-browser-user'
+                return None
+            else:
+                return JsonResponse(
+                    {
+                        'error': 'UserId header is required',
+                        'message': 'Please include a valid UserId header in your request'
+                    },
+                    status=401
+                )
         
         # Validate UserId format
         if not self.USER_ID_PATTERN.match(user_id):
@@ -68,6 +76,28 @@ class UserIdMiddleware(MiddlewareMixin):
         request.user_id = user_id
         
         return None
+    
+    def _is_browser_request(self, request):
+        """
+        Check if the request is from a browser (for DEBUG mode only).
+        
+        Args:
+            request: Django HttpRequest object
+            
+        Returns:
+            bool: True if request appears to be from a browser
+        """
+        user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+        accept_header = request.META.get('HTTP_ACCEPT', '').lower()
+        
+        # Check if it's a browser request
+        browser_indicators = ['mozilla', 'chrome', 'safari', 'firefox', 'edge', 'opera']
+        is_browser = any(indicator in user_agent for indicator in browser_indicators)
+        
+        # Also check Accept header for HTML
+        accepts_html = 'text/html' in accept_header
+        
+        return is_browser or accepts_html
     
     def process_response(self, request, response):
         """

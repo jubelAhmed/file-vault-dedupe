@@ -80,6 +80,7 @@ INSTALLED_APPS = [
   "corsheaders",
   "django_filters",
   "files",
+  "django_celery_results",
 ]
 
 MIDDLEWARE = [
@@ -272,3 +273,24 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
     ]
 }
+
+# Celery Configuration
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'django-db')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes max
+CELERY_RESULT_EXTENDED = True
+
+# Search Indexing Configuration
+SEARCH_INDEX_MIN_WORD_LENGTH = int(os.environ.get('SEARCH_INDEX_MIN_WORD_LENGTH', '3'))
+SEARCH_INDEX_MAX_WORD_LENGTH = int(os.environ.get('SEARCH_INDEX_MAX_WORD_LENGTH', '50'))
+SEARCH_INDEX_STOP_WORDS = set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'is', 'are', 'was', 'were',
+    'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
+    'will', 'would', 'should', 'could', 'may', 'might', 'must', 'can',
+    'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'as'
+])

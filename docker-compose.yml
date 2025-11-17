@@ -1,4 +1,17 @@
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build: 
       context: ./backend
@@ -12,6 +25,32 @@ services:
     environment:
       - DJANGO_DEBUG=True
       - DJANGO_SECRET_KEY=insecure-dev-only-key
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=django-db
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always
+
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A core worker --loglevel=info --pool=prefork --concurrency=4
+    volumes:
+      - backend_storage:/app/media
+      - backend_static:/app/staticfiles
+      - backend_data:/app/data
+    environment:
+      - DJANGO_DEBUG=True
+      - DJANGO_SECRET_KEY=insecure-dev-only-key
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=django-db
+    depends_on:
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
     restart: always
 
   frontend:
@@ -29,4 +68,5 @@ services:
 volumes:
   backend_storage:
   backend_static:
-  backend_data: 
+  backend_data:
+  redis_data: 

@@ -1,6 +1,6 @@
-# File Hub Frontend
+# File Vault Dedupe Frontend
 
-React-based frontend for the File Hub application, built with TypeScript and modern web technologies.
+React-based frontend for the File Vault Dedupe application, built with TypeScript and modern web technologies.
 
 ## 🚀 Technology Stack
 
@@ -35,10 +35,10 @@ React-based frontend for the File Hub application, built with TypeScript and mod
 
 ```bash
 # Build the image
-docker build -t file-hub-frontend .
+docker build -t file-vault-dedupe-frontend .
 
 # Run the container
-docker run -p 3000:3000 file-hub-frontend
+docker run -p 3000:3000 file-vault-dedupe-frontend
 ```
 
 ## 📁 Project Structure

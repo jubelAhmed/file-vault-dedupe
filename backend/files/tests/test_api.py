@@ -418,7 +418,7 @@ class FileAPITestCase(APITestCase):
         self.assertIn('service', response.data)
         self.assertIn('version', response.data)
         self.assertEqual(response.data['status'], 'healthy')
-        self.assertEqual(response.data['service'], 'abnormal-file-hub')
+        self.assertEqual(response.data['service'], 'file-vault-dedupe')
     
     def test_file_list_pagination(self):
         """Test file list pagination."""

@@ -17,8 +17,10 @@ from .serializers import (
 )
 from .services.deduplication_service import DeduplicationService
 from .services.storage_service import StorageService, StorageQuotaExceeded
+from .services.search_indexing_service import SearchIndexingService
 from .utils.validators import FileValidator
 from .filters import FileFilter
+from .tasks import index_file_content_task, remove_file_from_index_task
 
 
 class FilePagination(PageNumberPagination):
@@ -100,13 +102,19 @@ class FileViewSet(viewsets.ModelViewSet):
             )
         
         # Handle file upload with deduplication
-        # TODO: Future enhancement - Move to background job processing (Celery/Django Background Tasks)
-        # This will improve performance for large files and provide better user experience
-        # with async processing and status tracking
         try:
             file_instance = DeduplicationService.handle_file_upload(
                 request.user_id, file_obj
             )
+            
+            # Trigger async content indexing task
+            try:
+                index_file_content_task.delay(str(file_instance.id))
+            except Exception as e:
+                # Log error but don't fail the upload if indexing task fails to queue
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to queue indexing task for file {file_instance.id}: {str(e)}")
             
             # Serialize response
             serializer = self.get_serializer(file_instance, context={'request': request})
@@ -127,11 +135,23 @@ class FileViewSet(viewsets.ModelViewSet):
     
     def destroy(self, request, *args, **kwargs):
         """
-        Delete a file with proper reference counting.
+        Delete a file with proper reference counting and search index cleanup.
         """
         try:
             file_instance = self.get_object()
+            file_id = str(file_instance.id)
+            
+            # Delete the file (handles deduplication logic)
             DeduplicationService.handle_file_deletion(file_instance)
+            
+            # Trigger async task to remove from search index
+            try:
+                remove_file_from_index_task.delay(file_id)
+            except Exception as e:
+                # Log error but don't fail the deletion if indexing cleanup fails to queue
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to queue index removal task for file {file_id}: {str(e)}")
             
             return Response(
                 {'message': 'File deleted successfully'}, 
@@ -214,6 +234,76 @@ class FileViewSet(viewsets.ModelViewSet):
                 {'error': 'Failed to get file types', 'details': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    @action(detail=False, methods=['get'])
+    def search_by_keyword(self, request):
+        """
+        Search files by keyword(s) extracted from file content.
+        
+        Query Parameters:
+            - keyword: Single keyword to search for
+            - keywords: Comma-separated list of keywords (OR search)
+        
+        Returns:
+            List of files matching the keyword(s)
+        """
+        try:
+            # Get query parameters
+            keyword = request.query_params.get('keyword', '').strip()
+            keywords_param = request.query_params.get('keywords', '').strip()
+            
+            if not keyword and not keywords_param:
+                return Response(
+                    {'error': 'Please provide either "keyword" or "keywords" parameter'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Perform search
+            if keyword:
+                # Single keyword search
+                files = SearchIndexingService.search_files_by_keyword(
+                    keyword, 
+                    user_id=request.user_id
+                )
+            else:
+                # Multiple keywords search (OR operation)
+                keywords_list = [k.strip() for k in keywords_param.split(',') if k.strip()]
+                files = SearchIndexingService.search_files_by_keywords(
+                    keywords_list, 
+                    user_id=request.user_id
+                )
+            
+            # Serialize results
+            serializer = FileListSerializer(files, many=True, context={'request': request})
+            
+            return Response({
+                'count': len(files),
+                'results': serializer.data
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': 'Search failed', 'details': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'])
+    def index_stats(self, request):
+        """
+        Get statistics about the search index.
+        
+        Returns:
+            - Total number of indexed keywords
+            - Top keyword with most file references
+        """
+        try:
+            stats = SearchIndexingService.get_keyword_stats()
+            return Response(stats)
+        except Exception as e:
+            return Response(
+                {'error': 'Failed to get index stats', 'details': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 # Health check view
@@ -225,6 +315,6 @@ def health_check(request):
     """
     return Response({
         'status': 'healthy',
-        'service': 'abnormal-file-hub',
+        'service': 'file-vault-dedupe',
         'version': '1.0.0'
     })

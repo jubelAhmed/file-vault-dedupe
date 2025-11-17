@@ -65,6 +65,9 @@ assessment.cursorrules
 interview-context.md
 base_project_requirements.md
 
+# Internal documentation (not for public repository)
+.docs/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

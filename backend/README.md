@@ -1,6 +1,6 @@
-# File Hub Backend
+# File Vault Dedupe Backend
 
-Django-based backend for the File Hub application, providing a robust API for file management.
+Django-based backend for the File Vault Dedupe application, providing a robust API for file management.
 
 ## 🚀 Technology Stack
 
@@ -58,10 +58,10 @@ Django-based backend for the File Hub application, providing a robust API for fi
 
 ```bash
 # Build the image
-docker build -t file-hub-backend .
+docker build -t file-vault-dedupe-backend .
 
 # Run the container
-docker run -p 8000:8000 file-hub-backend
+docker run -p 8000:8000 file-vault-dedupe-backend
 ```
 
 ## 📁 Project Structure
