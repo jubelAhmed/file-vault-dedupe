@@ -48,19 +48,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Run migrations
+    - name: Create database directory
       working-directory: ./backend
-      env:
-        DJANGO_SETTINGS_MODULE: core.settings
-        DJANGO_SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DEBUG: 'False'
-        CELERY_BROKER_URL: redis://localhost:6379/0
-        CELERY_RESULT_BACKEND: redis://localhost:6379/0
       run: |
-        export DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-'django-insecure-test-key-for-ci-only'}
-        python manage.py migrate --noinput
+        mkdir -p data
     
-    - name: Run tests
+    - name: Run migrations and tests
       working-directory: ./backend
       env:
         DJANGO_SETTINGS_MODULE: core.settings
@@ -69,30 +62,10 @@ jobs:
         CELERY_BROKER_URL: redis://localhost:6379/0
         CELERY_RESULT_BACKEND: redis://localhost:6379/0
       run: |
-        export DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-'django-insecure-test-key-for-ci-only'}
+        export DJANGO_SECRET_KEY="${DJANGO_SECRET_KEY:-django-insecure-test-key-for-ci}"
+        python manage.py migrate --noinput
         python manage.py test
     
-    - name: Generate coverage report
-      working-directory: ./backend
-      env:
-        DJANGO_SETTINGS_MODULE: core.settings
-        DJANGO_SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DEBUG: 'False'
-        CELERY_BROKER_URL: redis://localhost:6379/0
-        CELERY_RESULT_BACKEND: redis://localhost:6379/0
-      run: |
-        export DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-'django-insecure-test-key-for-ci-only'}
-        coverage run --source='.' manage.py test
-        coverage report
-        coverage xml
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./backend/coverage.xml
-        flags: backend
-        name: backend-coverage
-      continue-on-error: true
 
   # Build job (commented out - uncomment when ready to build Docker images)
   # build:

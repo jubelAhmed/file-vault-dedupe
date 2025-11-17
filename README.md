@@ -1,274 +1,270 @@
 # File Vault Dedupe
 
-A full-stack file management system with intelligent deduplication, content search, and storage quota management. Built with Django REST Framework and React.
+A production-ready file management platform featuring intelligent cross-user deduplication, content-based search, and comprehensive storage management. Built with Django REST Framework backend and React TypeScript frontend.
 
-## 🚀 Technology Stack
+## Overview
 
-### Backend
-- Django 4.x (Python web framework)
-- Django REST Framework (API development)
-- SQLite (Development database)
-- Gunicorn (WSGI HTTP Server)
-- WhiteNoise (Static file serving)
+File Vault Dedupe solves the problem of storage waste by automatically detecting duplicate files across all users. When multiple users upload the same file, only one copy is stored on disk while all users maintain access. The system also provides powerful content-based search capabilities, allowing users to find files by searching within their content, not just filenames.
 
-### Frontend
+## Core Features
+
+### 🔄 Intelligent Deduplication
+- **SHA-256 Hash-Based Detection**: Identifies duplicate files with cryptographic precision
+- **Cross-User Deduplication**: Shares storage across all users while maintaining data isolation
+- **Reference System**: Creates lightweight references instead of storing duplicate files
+- **Automatic Cleanup**: Safely removes files only when all references are deleted
+
+### 🔍 Content-Based Search
+- **Keyword Extraction**: Automatically extracts searchable keywords from file content
+- **Multi-Format Support**: Indexes text from PDF, DOCX, XLSX, PPTX, TXT, CSV, JSON, XML, and more
+- **Fast Search**: Query files by keywords found within their content
+- **User-Isolated Results**: Search results respect user boundaries
+
+### 💾 Storage Management
+- **Per-User Quotas**: Configurable storage limits per user
+- **Real-Time Tracking**: Monitor storage usage and savings
+- **Deduplication Statistics**: View system-wide storage savings
+- **Quota Enforcement**: Prevents uploads that exceed limits
+
+### ⚡ Asynchronous Processing
+- **Celery Integration**: Background file indexing for non-blocking uploads
+- **Redis Message Broker**: Reliable task queue management
+- **Content Extraction**: Automatic text extraction and keyword indexing
+- **Search Index Maintenance**: Automatic cleanup on file deletion
+
+### 🔒 Security & Performance
+- **File Validation**: Size limits, extension checking, and content-type verification
+- **Rate Limiting**: Per-user API rate limiting to prevent abuse
+- **User Isolation**: Complete data separation between users
+- **Database Indexing**: Optimized queries for fast performance
+
+## Technology Stack
+
+**Backend:**
+- Django 4.x with Django REST Framework
+- Celery for asynchronous task processing
+- Redis for message brokering and caching
+- SQLite (development) / PostgreSQL (production-ready)
+- Gunicorn for production deployment
+
+**Frontend:**
 - React 18 with TypeScript
-- TanStack Query (React Query) for data fetching
-- Axios for API communication
-- Tailwind CSS for styling
-- Heroicons for UI elements
+- TanStack Query for efficient data fetching
+- Axios for HTTP requests
+- Tailwind CSS for modern UI
 
-### Infrastructure
-- Docker and Docker Compose
-- Local file storage with volume mounting
+**Infrastructure:**
+- Docker & Docker Compose for containerization
+- GitHub Actions for CI/CD
+- WhiteNoise for static file serving
 
-## 📋 Prerequisites
+## Quick Start
 
-Before you begin, ensure you have installed:
-- Docker (20.10.x or higher) and Docker Compose (2.x or higher)
-- Node.js (18.x or higher) - for local development
-- Python (3.9 or higher) - for local development
+### Prerequisites
+- Docker 20.10+ and Docker Compose 2.x+
+- (Optional) Python 3.12+ and Node.js 18+ for local development
 
-## 🛠️ Installation & Setup
-
-### Using Docker (Recommended)
+### Docker Setup (Recommended)
 
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd file-vault-dedupe
+
+# Start all services
 docker-compose up --build
 ```
 
-This will start:
-- **Redis** - Message broker for Celery (port 6379)
-- **Backend** - Django API server (port 8000)
-- **Celery** - Background worker for file indexing
-- **Frontend** - React application (port 3000)
+This starts:
+- **Redis** (port 6379) - Message broker for Celery
+- **Backend API** (port 8000) - Django REST API
+- **Celery Worker** - Background task processor
+- **Frontend** (port 3000) - React application
 
-All services are automatically configured and connected.
+Access the application:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000/api
+- Health Check: http://localhost:8000/health/
 
-### Local Development Setup
+### Local Development
 
 #### Backend Setup
-1. **Create and activate virtual environment**
-   ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+cd backend
 
-3. **Create necessary directories**
-   ```bash
-   mkdir -p media staticfiles data
-   ```
-4. **Create Environment File**
-    Create `.env`:
-   ```
-   # Rate Limiting Configuration
-   MAX_CALLS=10         # Maximum calls per time window
-   TIME_WINDOW=1        # Time window in seconds
-   
-   # Storage Configuration
-   STORAGE_QUOTA_PER_USER=10485760  # 10MB per user
-   ```
-   
-   **Note**: Rate limiting uses Django's cache framework. For development, it uses `LocMemCache` (in-memory). For production, configure Redis or Memcached in `settings.py` for multi-container deployments.
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-4. **Run migrations**
-   ```bash
-   python manage.py migrate
-   ```
+# Install dependencies
+pip install -r requirements.txt
 
-5. **Start the development server**
-   ```bash
-   python manage.py runserver
-   ```
+# Create environment file (.env)
+cat > .env << EOF
+DJANGO_SECRET_KEY=your-secret-key-here
+MAX_CALLS=10
+TIME_WINDOW=1
+STORAGE_QUOTA_PER_USER=10485760
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+EOF
 
-#### Testing and Coverage
+# Run migrations
+python manage.py migrate
 
-1. **Run all tests**
-   ```bash
-   cd backend
-   source venv/bin/activate
-   python manage.py test files.tests
-   ```
-
-2. **Run specific test files**
-   ```bash
-   # Test models and serializers
-   python manage.py test files.tests.test_models
-   
-   # Test API endpoints
-   python manage.py test files.tests.test_api
-   
-   # Test filtering functionality
-   python manage.py test files.tests.test_filters
-   
-   # Test rate limiting
-   python manage.py test files.tests.test_rate_limiting
-   
-   # Test services and utilities
-   python manage.py test files.tests.test_services
-   ```
-
-3. **Run tests with coverage**
-   ```bash
-   # Install coverage if not already installed
-   pip install coverage
-   
-   # Run tests with coverage
-   coverage run --source='.' manage.py test files.tests
-   
-   # Generate coverage report
-   coverage report
-   
-   # Generate HTML coverage report
-   coverage html
-   ```
-
-4. **View coverage report**
-   ```bash
-   # Open HTML report in browser
-   open htmlcov/index.html
-   ```
-
-5. **Test categories**
-   - **Models**: File and UserStorage model functionality
-   - **API**: CRUD operations, user isolation, stats endpoints
-   - **Filters**: Search, file type, size, and date filtering
-   - **Rate Limiting**: Per-user rate limiting enforcement
-   - **Services**: Hash, storage, and deduplication services
+# Start development server
+python manage.py runserver
+```
 
 #### Frontend Setup
-1. **Install dependencies**
-   ```bash
-   cd frontend
-   npm install
-   ```
 
-2. **Create environment file**
-   Create `.env.local`:
-   ```
-   REACT_APP_API_URL=http://localhost:8000/api
-   ```
+```bash
+cd frontend
 
-3. **Start development server**
-   ```bash
-   npm start
-   ```
+# Install dependencies
+npm install
 
-## 🌐 Accessing the Application
+# Create environment file (.env.local)
+echo "REACT_APP_API_URL=http://localhost:8000/api" > .env.local
 
-- Frontend Application: http://localhost:3000
-- Backend API: http://localhost:8000/api
+# Start development server
+npm start
+```
 
-## 📝 API Documentation
+## API Usage
 
-### File Management Endpoints
+### Authentication
+All API requests require a `UserId` header for user identification:
 
-#### List Files
-- **GET** `/api/files/`
-- Returns a list of all uploaded files
-- Response includes file metadata (name, size, type, upload date)
+```bash
+curl -H "UserId: user123" http://localhost:8000/api/files/
+```
 
-#### Upload File
-- **POST** `/api/files/`
-- Upload a new file
-- Request: Multipart form data with 'file' field
-- Returns: File metadata including ID and upload status
+### Key Endpoints
 
-#### Get File Details
-- **GET** `/api/files/<file_id>/`
-- Retrieve details of a specific file
-- Returns: Complete file metadata
+**File Operations:**
+- `GET /api/files/` - List files (supports filtering and search)
+- `POST /api/files/` - Upload file
+- `GET /api/files/{id}/` - Get file details
+- `DELETE /api/files/{id}/` - Delete file
 
-#### Delete File
-- **DELETE** `/api/files/<file_id>/`
-- Remove a file from the system
-- Returns: 204 No Content on success
+**Search:**
+- `GET /api/files/search/?keyword=contract` - Search files by content keyword
+- `GET /api/files/search/?keywords=contract,agreement` - Multi-keyword search
 
-#### Download File
-- Access file directly through the file URL provided in metadata
+**Statistics:**
+- `GET /api/files/storage_stats/` - User storage statistics
+- `GET /api/files/deduplication_stats/` - System-wide deduplication stats
+- `GET /api/files/index_stats/` - Search index statistics
 
-## 🗄️ Project Structure
+**Filtering:**
+- `GET /api/files/?search=filename` - Search by filename
+- `GET /api/files/?file_type=application/pdf` - Filter by file type
+- `GET /api/files/?min_size=1000&max_size=5000` - Filter by size range
+- `GET /api/files/?start=2024-01-01&end=2024-12-31` - Filter by date range
+
+See [API Documentation](backend/API_ENDPOINTS.md) for complete reference.
+
+## Testing
+
+```bash
+cd backend
+
+# Run all tests
+python manage.py test
+
+# Run with coverage
+coverage run --source='.' manage.py test
+coverage report
+coverage html
+
+# Run specific test suite
+python manage.py test files.tests.test_api
+python manage.py test files.tests.test_services
+```
+
+Test coverage: **97%+**
+
+## Project Structure
 
 ```
 file-vault-dedupe/
-├── backend/                # Django backend
-│   ├── files/             # Main application
-│   │   ├── models.py      # Data models
-│   │   ├── views.py       # API views
-│   │   ├── urls.py        # URL routing
-│   │   └── serializers.py # Data serialization
-│   ├── core/              # Project settings
-│   └── requirements.txt   # Python dependencies
-├── frontend/              # React frontend
+├── backend/
+│   ├── core/                    # Django project settings
+│   │   ├── settings.py           # Configuration
+│   │   ├── celery.py             # Celery setup
+│   │   └── middleware/           # Custom middleware
+│   ├── files/                    # Main application
+│   │   ├── models.py             # Data models (File, UserStorage, FileSearchIndex)
+│   │   ├── views.py              # API endpoints
+│   │   ├── serializers.py        # Data serialization
+│   │   ├── services/             # Business logic
+│   │   │   ├── deduplication_service.py
+│   │   │   ├── search_service.py
+│   │   │   ├── storage_service.py
+│   │   │   └── content_extraction_service.py
+│   │   ├── tasks.py              # Celery tasks
+│   │   └── tests/                # Test suite
+│   └── requirements.txt
+├── frontend/
 │   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── services/      # API services
-│   │   └── types/         # TypeScript types
-│   └── package.json      # Node.js dependencies
-├── postman/               # Postman API collections
-│   ├── File-Vault-Dedupe-API.postman_collection.json
-│   └── File-Vault-Dedupe-Environment.postman_environment.json
-└── docker-compose.yml    # Docker composition (includes Redis, Backend, Celery, Frontend)
+│   │   ├── components/            # React components
+│   │   ├── services/             # API client
+│   │   └── types/                # TypeScript definitions
+│   └── package.json
+├── postman/                       # API testing collections
+├── .github/workflows/             # CI/CD pipelines
+└── docker-compose.yml             # Container orchestration
 ```
 
-## 🔧 Development Features
+## Configuration
 
-- Hot reloading for both frontend and backend
-- React Query DevTools for debugging data fetching
-- TypeScript for better development experience
-- Tailwind CSS for rapid UI development
+### Environment Variables
 
-## 🐛 Troubleshooting
+**Backend (.env):**
+- `DJANGO_SECRET_KEY` - Django secret key (required)
+- `MAX_CALLS` - Rate limit: max requests per window (default: 10)
+- `TIME_WINDOW` - Rate limit: time window in seconds (default: 1)
+- `STORAGE_QUOTA_PER_USER` - Storage quota in bytes (default: 10MB)
+- `CELERY_BROKER_URL` - Redis connection URL
+- `CELERY_RESULT_BACKEND` - Redis result backend URL
 
-1. **Port Conflicts**
-   ```bash
-   # If ports 3000 or 8000 are in use, modify docker-compose.yml or use:
-   # Frontend: npm start -- --port 3001
-   # Backend: python manage.py runserver 8001
-   ```
+**Frontend (.env.local):**
+- `REACT_APP_API_URL` - Backend API URL
 
-2. **File Upload Issues**
-   - Maximum file size: 10MB
-   - Ensure proper permissions on media directory
-   - Check network tab for detailed error messages
+## Supported File Types for Content Search
 
-3. **Database Issues**
-   ```bash
-   # Reset database
-   rm backend/data/db.sqlite3
-   python manage.py migrate
-   ```
+The system can extract and index text content from:
+- **Documents**: PDF, DOC, DOCX, ODT
+- **Spreadsheets**: XLS, XLSX, ODS, CSV
+- **Presentations**: PPT, PPTX, ODP
+- **Text Files**: TXT, XML, HTML, RTF, JSON, YAML
 
-## 🎯 Key Features
+Files are automatically indexed in the background after upload.
 
-- **Intelligent Deduplication**: Automatically detects and eliminates duplicate files across all users, saving storage space
-- **Content-Based Search**: Search files by keywords extracted from their content (PDF, DOCX, XLSX, TXT, and more)
-- **Storage Quota Management**: Per-user storage limits with real-time tracking and statistics
-- **Async Processing**: Background file indexing using Celery for non-blocking uploads
-- **Security First**: File validation, content-type checking, rate limiting, and user isolation
-- **RESTful API**: Comprehensive API with filtering, pagination, and search capabilities
+## CI/CD
 
-## 📚 Documentation
+GitHub Actions workflow automatically:
+- Runs tests on push/PR
+- Generates coverage reports
+- Validates code quality
 
-- [API Documentation](backend/API_ENDPOINTS.md) - Complete API reference
-- [Celery Setup Guide](backend/CELERY_SETUP.md) - Background task processing setup
-- [Postman Collection](postman/) - API testing collections
+See `.github/workflows/backend.yml` for details.
 
-## 🤝 Contributing
+## Documentation
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+- [API Endpoints Reference](backend/API_ENDPOINTS.md)
+- [Celery Setup Guide](backend/CELERY_SETUP.md)
 
-## 📄 License
+## License
 
 This project is open source and available under the MIT License.
 
-## 👤 Author
+## Author
 
-**Jubel Ahmed** 
+**Jubel Ahmed**
 
+---
+
+Built with ❤️ using Django, React, and modern DevOps practices.
