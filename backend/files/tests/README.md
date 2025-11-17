@@ -68,7 +68,7 @@ python manage.py test files.tests.test_models.FileModelTestCase.test_file_creati
 
 ## 📊 Coverage
 
-Current test coverage: **97%**
+Current test coverage: **82%** (72 tests covering core functionality)
 
 To run coverage analysis:
 ```bash

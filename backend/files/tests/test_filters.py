@@ -96,12 +96,19 @@ class FileFilterTestCase(APITestCase):
         f2 = SimpleUploadedFile("mid.txt", b"BB", content_type="text/plain")
         f3 = SimpleUploadedFile("new.txt", b"CCC", content_type="text/plain")
 
-        self.client.post("/api/files/", {"file": f1}, format="multipart", HTTP_UserId=self.user_id)
-        self.client.post("/api/files/", {"file": f2}, format="multipart", HTTP_UserId=self.user_id)
-        self.client.post("/api/files/", {"file": f3}, format="multipart", HTTP_UserId=self.user_id)
+        response1 = self.client.post("/api/files/", {"file": f1}, format="multipart", HTTP_UserId=self.user_id)
+        response2 = self.client.post("/api/files/", {"file": f2}, format="multipart", HTTP_UserId=self.user_id)
+        response3 = self.client.post("/api/files/", {"file": f3}, format="multipart", HTTP_UserId=self.user_id)
+
+        # Verify uploads succeeded
+        self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response2.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response3.status_code, status.HTTP_201_CREATED)
 
         # Adjust uploaded_at for deterministic filtering
         files = list(File.objects.filter(user_id=self.user_id).order_by("uploaded_at"))
+        self.assertGreaterEqual(len(files), 3, "Expected at least 3 files to be created")
+
         now = timezone.now()
         files[0].uploaded_at = now - timedelta(days=3)
         files[0].save(update_fields=["uploaded_at"])
@@ -127,25 +134,31 @@ class FileFilterTestCase(APITestCase):
         files = list(File.objects.filter(user_id=self.user_id).order_by("uploaded_at"))
         if len(files) < 3:
             # seed if needed
-            self.client.post(
+            response1 = self.client.post(
                 "/api/files/",
                 {"file": SimpleUploadedFile("a.txt", b"A", content_type="text/plain")},
                 format="multipart",
                 HTTP_UserId=self.user_id,
             )
-            self.client.post(
+            response2 = self.client.post(
                 "/api/files/",
                 {"file": SimpleUploadedFile("b.txt", b"B", content_type="text/plain")},
                 format="multipart",
                 HTTP_UserId=self.user_id,
             )
-            self.client.post(
+            response3 = self.client.post(
                 "/api/files/",
                 {"file": SimpleUploadedFile("c.txt", b"C", content_type="text/plain")},
                 format="multipart",
                 HTTP_UserId=self.user_id,
             )
+            # Verify uploads succeeded
+            self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(response2.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(response3.status_code, status.HTTP_201_CREATED)
             files = list(File.objects.filter(user_id=self.user_id).order_by("uploaded_at"))
+
+        self.assertGreaterEqual(len(files), 3, "Expected at least 3 files to be created")
 
         now = timezone.now()
         files[0].uploaded_at = now - timedelta(days=3)
@@ -172,25 +185,31 @@ class FileFilterTestCase(APITestCase):
         files = list(File.objects.filter(user_id=self.user_id).order_by("uploaded_at"))
         if len(files) < 3:
             # seed if needed
-            self.client.post(
+            response1 = self.client.post(
                 "/api/files/",
                 {"file": SimpleUploadedFile("x.txt", b"X", content_type="text/plain")},
                 format="multipart",
                 HTTP_UserId=self.user_id,
             )
-            self.client.post(
+            response2 = self.client.post(
                 "/api/files/",
                 {"file": SimpleUploadedFile("y.txt", b"YY", content_type="text/plain")},
                 format="multipart",
                 HTTP_UserId=self.user_id,
             )
-            self.client.post(
+            response3 = self.client.post(
                 "/api/files/",
                 {"file": SimpleUploadedFile("z.txt", b"ZZZ", content_type="text/plain")},
                 format="multipart",
                 HTTP_UserId=self.user_id,
             )
+            # Verify uploads succeeded
+            self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(response2.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(response3.status_code, status.HTTP_201_CREATED)
             files = list(File.objects.filter(user_id=self.user_id).order_by("uploaded_at"))
+
+        self.assertGreaterEqual(len(files), 3, "Expected at least 3 files to be created")
 
         now = timezone.now()
         files[0].uploaded_at = now - timedelta(days=3)

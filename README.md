@@ -187,7 +187,7 @@ python manage.py test files.tests.test_api
 python manage.py test files.tests.test_services
 ```
 
-Test coverage: **97%+**
+Test coverage: **82%** (72 tests covering core functionality)
 
 ## Code Quality & Linting
 
