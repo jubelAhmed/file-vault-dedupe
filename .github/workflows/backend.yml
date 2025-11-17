@@ -1,0 +1,162 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libmagic1 libtesseract-dev tesseract-ocr
+    
+    - name: Install Python dependencies
+      working-directory: ./backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run migrations
+      working-directory: ./backend
+      env:
+        DJANGO_SETTINGS_MODULE: core.settings
+        DJANGO_SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        DEBUG: 'False'
+        CELERY_BROKER_URL: redis://localhost:6379/0
+        CELERY_RESULT_BACKEND: redis://localhost:6379/0
+      run: |
+        export DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-'django-insecure-test-key-for-ci-only'}
+        python manage.py migrate --noinput
+    
+    - name: Run tests
+      working-directory: ./backend
+      env:
+        DJANGO_SETTINGS_MODULE: core.settings
+        DJANGO_SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        DEBUG: 'False'
+        CELERY_BROKER_URL: redis://localhost:6379/0
+        CELERY_RESULT_BACKEND: redis://localhost:6379/0
+      run: |
+        export DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-'django-insecure-test-key-for-ci-only'}
+        python manage.py test
+    
+    - name: Generate coverage report
+      working-directory: ./backend
+      env:
+        DJANGO_SETTINGS_MODULE: core.settings
+        DJANGO_SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        DEBUG: 'False'
+        CELERY_BROKER_URL: redis://localhost:6379/0
+        CELERY_RESULT_BACKEND: redis://localhost:6379/0
+      run: |
+        export DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-'django-insecure-test-key-for-ci-only'}
+        coverage run --source='.' manage.py test
+        coverage report
+        coverage xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+        flags: backend
+        name: backend-coverage
+      continue-on-error: true
+
+  # Build job (commented out - uncomment when ready to build Docker images)
+  # build:
+  #   runs-on: ubuntu-latest
+  #   needs: test
+  #   
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+  #   
+  #   - name: Set up Docker Buildx
+  #     uses: docker/setup-buildx-action@v3
+  #   
+  #   - name: Login to Docker Hub
+  #     uses: docker/login-action@v3
+  #     with:
+  #       username: ${{ secrets.DOCKER_USERNAME }}
+  #       password: ${{ secrets.DOCKER_PASSWORD }}
+  #   
+  #   - name: Build and push Docker image
+  #     uses: docker/build-push-action@v5
+  #     with:
+  #       context: ./backend
+  #       push: true
+  #       tags: |
+  #         ${{ secrets.DOCKER_USERNAME }}/file-vault-dedupe-backend:latest
+  #         ${{ secrets.DOCKER_USERNAME }}/file-vault-dedupe-backend:${{ github.sha }}
+  #       cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/file-vault-dedupe-backend:latest
+  #       cache-to: type=inline
+
+  # Deploy job (commented out - uncomment when ready to deploy)
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   if: github.ref == 'refs/heads/main'
+  #   
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+  #   
+  #   # Example: Deploy to AWS ECS
+  #   # - name: Configure AWS credentials
+  #   #   uses: aws-actions/configure-aws-credentials@v4
+  #   #   with:
+  #   #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #   #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #   #     aws-region: us-east-1
+  #   #
+  #   # - name: Deploy to ECS
+  #   #   run: |
+  #   #     aws ecs update-service --cluster file-vault-cluster --service file-vault-backend --force-new-deployment
+  #   
+  #   # Example: Deploy to Heroku
+  #   # - name: Deploy to Heroku
+  #   #   uses: akhileshns/heroku-deploy@v3.13.15
+  #   #   with:
+  #   #     heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+  #   #     heroku_app_name: "file-vault-dedupe-backend"
+  #   #     heroku_email: ${{ secrets.HEROKU_EMAIL }}
+  #   
+  #   # Example: Deploy to DigitalOcean App Platform
+  #   # - name: Deploy to DigitalOcean
+  #   #   uses: digitalocean/app_action@v1
+  #   #   with:
+  #   #     app_name: file-vault-dedupe-backend
+  #   #     token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
