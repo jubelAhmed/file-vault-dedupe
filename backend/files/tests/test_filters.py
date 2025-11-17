@@ -92,9 +92,10 @@ class FileFilterTestCase(APITestCase):
         from django.utils import timezone
 
         # Create three files with controlled timestamps
-        f1 = SimpleUploadedFile("old.txt", b"A", content_type="text/plain")
-        f2 = SimpleUploadedFile("mid.txt", b"BB", content_type="text/plain")
-        f3 = SimpleUploadedFile("new.txt", b"CCC", content_type="text/plain")
+        # Use larger content to ensure reliable MIME type detection
+        f1 = SimpleUploadedFile("old.txt", b"Content for old file", content_type="text/plain")
+        f2 = SimpleUploadedFile("mid.txt", b"Content for mid file", content_type="text/plain")
+        f3 = SimpleUploadedFile("new.txt", b"Content for new file", content_type="text/plain")
 
         response1 = self.client.post(
             "/api/files/", {"file": f1}, format="multipart", HTTP_UserId=self.user_id
@@ -142,19 +143,31 @@ class FileFilterTestCase(APITestCase):
             # seed if needed
             response1 = self.client.post(
                 "/api/files/",
-                {"file": SimpleUploadedFile("a.txt", b"A", content_type="text/plain")},
+                {
+                    "file": SimpleUploadedFile(
+                        "a.txt", b"Content for file a", content_type="text/plain"
+                    )
+                },
                 format="multipart",
                 HTTP_UserId=self.user_id,
             )
             response2 = self.client.post(
                 "/api/files/",
-                {"file": SimpleUploadedFile("b.txt", b"B", content_type="text/plain")},
+                {
+                    "file": SimpleUploadedFile(
+                        "b.txt", b"Content for file b", content_type="text/plain"
+                    )
+                },
                 format="multipart",
                 HTTP_UserId=self.user_id,
             )
             response3 = self.client.post(
                 "/api/files/",
-                {"file": SimpleUploadedFile("c.txt", b"C", content_type="text/plain")},
+                {
+                    "file": SimpleUploadedFile(
+                        "c.txt", b"Content for file c", content_type="text/plain"
+                    )
+                },
                 format="multipart",
                 HTTP_UserId=self.user_id,
             )
@@ -193,19 +206,31 @@ class FileFilterTestCase(APITestCase):
             # seed if needed
             response1 = self.client.post(
                 "/api/files/",
-                {"file": SimpleUploadedFile("x.txt", b"X", content_type="text/plain")},
+                {
+                    "file": SimpleUploadedFile(
+                        "x.txt", b"Content for file x", content_type="text/plain"
+                    )
+                },
                 format="multipart",
                 HTTP_UserId=self.user_id,
             )
             response2 = self.client.post(
                 "/api/files/",
-                {"file": SimpleUploadedFile("y.txt", b"YY", content_type="text/plain")},
+                {
+                    "file": SimpleUploadedFile(
+                        "y.txt", b"Content for file y", content_type="text/plain"
+                    )
+                },
                 format="multipart",
                 HTTP_UserId=self.user_id,
             )
             response3 = self.client.post(
                 "/api/files/",
-                {"file": SimpleUploadedFile("z.txt", b"ZZZ", content_type="text/plain")},
+                {
+                    "file": SimpleUploadedFile(
+                        "z.txt", b"Content for file z", content_type="text/plain"
+                    )
+                },
                 format="multipart",
                 HTTP_UserId=self.user_id,
             )
