@@ -116,6 +116,10 @@ EOF
 # Run migrations
 python manage.py migrate
 
+# Setup Git hooks (optional but recommended)
+# This installs pre-push hooks that run linting checks automatically
+./scripts/setup-hooks.sh
+
 # Start development server
 python manage.py runserver
 ```
@@ -208,6 +212,18 @@ cd backend
 - `mypy` - Static type checker
 
 Install with: `pip install -r requirements-dev.txt`
+
+### Git Hooks (Pre-Push Linting)
+
+The project includes a pre-push Git hook that automatically runs linting checks before pushing to GitHub. This prevents pushing code that doesn't pass quality checks.
+
+**Setup:**
+```bash
+# Install Git hooks (run once after cloning)
+./scripts/setup-hooks.sh
+```
+
+After setup, the hook will automatically run `./lint.sh check` before every `git push`. If linting fails, the push will be blocked. You can bypass it with `git push --no-verify` (not recommended).
 
 ## Project Structure
 

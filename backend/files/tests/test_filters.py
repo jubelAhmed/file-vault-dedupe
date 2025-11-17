@@ -96,9 +96,15 @@ class FileFilterTestCase(APITestCase):
         f2 = SimpleUploadedFile("mid.txt", b"BB", content_type="text/plain")
         f3 = SimpleUploadedFile("new.txt", b"CCC", content_type="text/plain")
 
-        response1 = self.client.post("/api/files/", {"file": f1}, format="multipart", HTTP_UserId=self.user_id)
-        response2 = self.client.post("/api/files/", {"file": f2}, format="multipart", HTTP_UserId=self.user_id)
-        response3 = self.client.post("/api/files/", {"file": f3}, format="multipart", HTTP_UserId=self.user_id)
+        response1 = self.client.post(
+            "/api/files/", {"file": f1}, format="multipart", HTTP_UserId=self.user_id
+        )
+        response2 = self.client.post(
+            "/api/files/", {"file": f2}, format="multipart", HTTP_UserId=self.user_id
+        )
+        response3 = self.client.post(
+            "/api/files/", {"file": f3}, format="multipart", HTTP_UserId=self.user_id
+        )
 
         # Verify uploads succeeded
         self.assertEqual(response1.status_code, status.HTTP_201_CREATED)

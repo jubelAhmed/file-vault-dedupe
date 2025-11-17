@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+# Git pre-push hook
+# Runs linting checks before allowing push to remote
+# Author: Jubel Ahmed
+#
+# This hook prevents pushing code that doesn't pass linting checks.
+# To skip this hook, use: git push --no-verify
+
+set -e
+
+echo "🔍 Running pre-push linting checks..."
+
+# Check if backend directory exists
+if [ ! -d "backend" ]; then
+    echo "⚠️  Backend directory not found. Skipping linting."
+    exit 0
+fi
+
+# Change to backend directory
+cd backend
+
+# Check if lint.sh exists
+if [ ! -f "lint.sh" ]; then
+    echo "⚠️  lint.sh not found. Skipping linting."
+    exit 0
+fi
+
+# Make sure lint.sh is executable
+chmod +x lint.sh
+
+# Run linting checks
+echo "Running linting checks in backend..."
+if ./lint.sh check; then
+    echo "✅ All linting checks passed!"
+    exit 0
+else
+    echo ""
+    echo "❌ Linting checks failed!"
+    echo "Please fix the issues above before pushing."
+    echo "You can run './lint.sh fix' to auto-fix some issues."
+    echo ""
+    echo "To skip this hook (not recommended), use: git push --no-verify"
+    exit 1
+fi
+
