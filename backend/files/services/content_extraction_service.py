@@ -13,7 +13,6 @@ import logging
 from typing import Optional, Set
 from django.core.files.base import File as DjangoFile
 from django.conf import settings
-import magic
 
 logger = logging.getLogger(__name__)
 

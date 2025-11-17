@@ -15,7 +15,9 @@ from ..models import File
     MEDIA_ROOT=tempfile.mkdtemp(),
     STORAGE_QUOTA_PER_USER=1024,  # 1KB for testing
     RATE_LIMIT_CALLS=100,  # High limit for testing
-    RATE_LIMIT_WINDOW=1
+    RATE_LIMIT_WINDOW=1,
+    CELERY_TASK_ALWAYS_EAGER=True,  # Run Celery tasks synchronously in tests
+    CELERY_TASK_EAGER_PROPAGATES=True
 )
 class FileAPITestCase(APITestCase):
     """Test File API endpoints."""
@@ -379,27 +381,36 @@ class FileAPITestCase(APITestCase):
     def test_file_types_success(self):
         """Test file types endpoint."""
         # Upload files of different types
-        self.client.post(
+        response1 = self.client.post(
             '/api/files/',
             {'file': self.small_file},
             format='multipart',
             HTTP_UserId=self.user_id
         )
-        self.client.post(
+        self.assertEqual(response1.status_code, status.HTTP_201_CREATED, "First file upload failed")
+        
+        # Create a valid text file instead of fake image to avoid content validation issues
+        pdf_file = SimpleUploadedFile(
+            "test.pdf", 
+            b"%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n>>\nendobj\nxref\n0 0\ntrailer\n<<\n/Root 1 0 R\n>>\n%%EOF", 
+            content_type="application/pdf"
+        )
+        response2 = self.client.post(
             '/api/files/',
-            {'file': self.image_file},
+            {'file': pdf_file},
             format='multipart',
             HTTP_UserId=self.user_id
         )
+        self.assertEqual(response2.status_code, status.HTTP_201_CREATED, "Second file upload failed")
         
         response = self.client.get('/api/files/file_types/', HTTP_UserId=self.user_id)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('file_types', response.data)
         self.assertIn('count', response.data)
-        self.assertEqual(response.data['count'], 2)
+        self.assertEqual(response.data['count'], 2, f"Expected 2 file types, got {response.data}")
         self.assertIn('text/plain', response.data['file_types'])
-        self.assertIn('image/jpeg', response.data['file_types'])
+        self.assertIn('application/pdf', response.data['file_types'])
     
     def test_file_types_missing_userid(self):
         """Test file types without UserId header."""

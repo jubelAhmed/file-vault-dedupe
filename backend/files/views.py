@@ -145,13 +145,14 @@ class FileViewSet(viewsets.ModelViewSet):
             DeduplicationService.handle_file_deletion(file_instance)
             
             # Trigger async task to remove from search index
+            # Celery will run synchronously in tests if CELERY_TASK_ALWAYS_EAGER is True
             try:
                 remove_file_from_index_task.delay(file_id)
             except Exception as e:
                 # Log error but don't fail the deletion if indexing cleanup fails to queue
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.error(f"Failed to queue index removal task for file {file_id}: {str(e)}")
+                logger.warning(f"Failed to queue index removal task for file {file_id}: {str(e)}")
             
             return Response(
                 {'message': 'File deleted successfully'}, 

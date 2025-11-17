@@ -188,6 +188,10 @@ class FileValidator:
         Raises:
             ValidationError: If file content doesn't match its extension
         """
+        # Skip validation for empty files
+        if file_obj.size == 0:
+            return
+        
         _, ext = os.path.splitext(file_obj.name.lower())
         
         # Get expected MIME types for this extension
